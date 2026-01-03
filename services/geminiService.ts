@@ -17,10 +17,8 @@ const getAiInstance = (): GoogleGenAI => {
   return new GoogleGenAI({ apiKey });
 };
 
-// 2. Define Response Schema
-// We define the schema for a single article and a list of articles to ensure strict JSON output.
-// NOTE: We only use this for Knowledge Base generation. For Search, we use prompt engineering to avoid conflicts.
-const articleSchema = {
+// HELPER: Generate Schema dynamically to avoid top-level evaluation crashes
+const getArticleSchema = () => ({
   type: Type.OBJECT,
   properties: {
     id: { type: Type.STRING },
@@ -36,12 +34,7 @@ const articleSchema = {
     tweet_draft: { type: Type.STRING }
   },
   required: ["id", "title", "author", "source", "type", "category", "url", "summary", "insights", "application_tips", "tweet_draft"]
-};
-
-const digestSchema = {
-  type: Type.ARRAY,
-  items: articleSchema
-};
+});
 
 /**
  * Helper to clean JSON string if the model returns markdown code blocks or conversational text
@@ -366,7 +359,7 @@ export async function analyzeUrl(url: string): Promise<Article> {
         contents: prompt,
         config: {
           responseMimeType: "application/json",
-          responseSchema: articleSchema, // We can use strict schema here since no tools are used
+          responseSchema: getArticleSchema(), // Use lazy schema generator
         },
       });
 

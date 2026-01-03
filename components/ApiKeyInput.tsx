@@ -31,8 +31,11 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-stone-50">
-      <div className="bg-white max-w-md w-full rounded-2xl shadow-xl border border-stone-100 overflow-hidden">
+    <div className="w-full flex-grow flex items-center justify-center p-4">
+      <div 
+        className="bg-white max-w-md w-full rounded-2xl shadow-xl border border-stone-100 overflow-hidden relative"
+        style={{ zIndex: 60, backgroundColor: '#ffffff', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+      >
         <div className="p-8 md:p-10">
           <div className="w-14 h-14 bg-stone-100 rounded-full flex items-center justify-center mb-6 mx-auto">
             <Key className="w-7 h-7 text-charcoal" />

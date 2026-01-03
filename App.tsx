@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, Component, ErrorInfo } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types';
 import { fetchLiveDigest, analyzeUrl } from './services/geminiService';
 import DigestConfigurator from './components/DigestConfigurator';
@@ -6,10 +7,47 @@ import ArticleCard from './components/ArticleCard';
 import UrlAnalyzer from './components/UrlAnalyzer';
 import SkeletonLoader from './components/SkeletonLoader';
 import ApiKeyInput from './components/ApiKeyInput';
-import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home, Shuffle, Key, LogOut } from 'lucide-react';
+import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home, Shuffle, LogOut } from 'lucide-react';
 import { DESIGN_QUOTES } from './constants';
 
-// ID Generator Helper (Polyfill for crypto.randomUUID in insecure contexts)
+// --- Error Boundary Component ---
+class SimpleErrorBoundary extends Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center min-h-screen flex flex-col items-center justify-center bg-white">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Something went wrong.</h2>
+          <p className="text-stone-600 mb-4">Please try refreshing the page.</p>
+          <pre className="text-xs bg-stone-100 p-4 rounded text-left overflow-auto max-w-lg w-full">
+            {this.state.error?.toString()}
+          </pre>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-6 px-6 py-2 bg-charcoal text-white rounded-full hover:bg-black"
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ID Generator Helper
 const generateId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -18,7 +56,7 @@ const generateId = () => {
 };
 
 // Main App Component
-function App() {
+function AppContent() {
   // State
   const [hasApiKey, setHasApiKey] = useState(false);
   const [view, setView] = useState<'dashboard' | 'history' | 'result' | 'saved'>('dashboard');
@@ -42,11 +80,15 @@ function App() {
   // Daily Quote State
   const [currentQuote, setCurrentQuote] = useState(DESIGN_QUOTES[0]);
 
-  // Check for API Key on mount
+  // Check for API Key on mount - Safe Access
   useEffect(() => {
-    const key = localStorage.getItem('ddd_api_key');
-    if (key) {
-      setHasApiKey(true);
+    try {
+      const key = localStorage.getItem('ddd_api_key');
+      if (key) {
+        setHasApiKey(true);
+      }
+    } catch (e) {
+      console.warn("Local storage access failed", e);
     }
   }, []);
 
@@ -56,7 +98,11 @@ function App() {
   }, []);
 
   const handleSaveApiKey = (key: string) => {
-    localStorage.setItem('ddd_api_key', key);
+    try {
+      localStorage.setItem('ddd_api_key', key);
+    } catch (e) {
+       console.warn("Could not save key to storage", e);
+    }
     setHasApiKey(true);
   };
 
@@ -458,10 +504,22 @@ function App() {
     </footer>
   );
 
-  // Initial State: No API Key
+  // Initial State: No API Key - ROBUST MODAL RENDERING
   if (!hasApiKey) {
     return (
-        <div className="min-h-screen font-sans text-charcoal bg-stone-50">
+        <div style={{ 
+            position: 'fixed', 
+            top: 0,
+            left: 0,
+            width: '100vw', 
+            height: '100dvh', // Use dynamic viewport height for mobile
+            zIndex: 9999, 
+            backgroundColor: '#fafaf9', 
+            display: 'flex', 
+            flexDirection: 'column',
+            overflowY: 'auto',
+            overscrollBehavior: 'none'
+        }}>
             <ApiKeyInput onSave={handleSaveApiKey} />
         </div>
     );
@@ -483,4 +541,11 @@ function App() {
   );
 }
 
-export default App;
+// Default Export wrapping with Error Boundary
+export default function App() {
+  return (
+    <SimpleErrorBoundary>
+      <AppContent />
+    </SimpleErrorBoundary>
+  );
+}
