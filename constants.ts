@@ -23,114 +23,98 @@ export const DESIGN_QUOTES = [
 export const FALLBACK_ARTICLES: Article[] = [
   {
     id: 'fb_1',
-    title: 'The Evolution of Design Systems in 2024',
+    title: 'Atomic Design',
     author: 'Brad Frost',
-    source: 'Big Medium',
+    source: 'Brad Frost Blog',
     type: 'Article',
     category: 'Design Systems',
-    url: 'https://bradfrost.com/blog/post/design-systems-2024/',
+    url: 'https://bradfrost.com/blog/post/atomic-web-design/',
     summary: [
-      "Design systems are moving beyond simple component libraries to become integrated orchestration engines for product development.",
-      "The article explores how AI is reshaping the contribution model, allowing for automated documentation and token generation.",
-      "A shift from 'consistency' to 'coherence' is identified as the primary goal for mature design organizations."
+      "Atomic design is a methodology for creating design systems.",
+      "It breaks interfaces down into atoms, molecules, organisms, templates, and pages.",
+      "This approach allows for more consistent and scalable UI development."
     ],
     insights: [
-      "Atomic Design 2.0 incorporates AI-driven component variations.",
-      "Tokens are now the primary source of truth, not Figma files.",
-      "Governance is shifting from policing to enabling rapid experimentation.",
-      "Multi-brand systems are becoming the norm for enterprise orgs.",
-      "Headless design systems allow for better framework agnosticism."
+      "Systems should be built from the ground up (atoms to pages).",
+      "Consistency in small parts leads to coherence in large pages.",
+      "Vocabulary matters: shared naming conventions align teams."
     ],
     application_tips: [
-      "Audit your current token structure to ensure it supports multi-mode theming.",
-      "In your next retro, discuss if your system is blocking or enabling creativity.",
-      "Start documenting 'intent' alongside component specs.",
-      "Experiment with AI tools to generate variant permutations.",
-      "Create a 'contribution guide' that treats developers as primary users."
+      "Audit your current UI inventory.",
+      "Start defining your atoms (buttons, inputs).",
+      "Combine atoms to see if they work as molecules."
     ]
   },
   {
     id: 'fb_2',
-    title: 'AI-First Design Patterns',
-    author: 'Luke Wroblewski',
-    source: 'A List Apart',
+    title: '10 Usability Heuristics for User Interface Design',
+    author: 'Jakob Nielsen',
+    source: 'NNGroup',
     type: 'Article',
-    category: 'AI in UX',
-    url: 'https://alistapart.com/article/ai-first-patterns/',
+    category: 'Research',
+    url: 'https://www.nngroup.com/articles/ten-usability-heuristics/',
     summary: [
-      "Traditional UI patterns based on direct manipulation are being challenged by intent-based interfaces.",
-      "The 'black box' problem of AI requires new feedback loops to build user trust and manage expectations.",
-      "This piece outlines 5 key patterns for generative UI: Suggestion, Curated Options, Co-creation, Refinement, and Explainability."
+      "Jakob Nielsen's 10 general principles for interaction design.",
+      "They are called 'heuristics' because they are broad rules of thumb and not specific usability guidelines.",
+      "These remain the most used framework for heuristic evaluation."
     ],
     insights: [
-      "Users prefer 'curated options' over 'blank canvas' when using AI.",
-      "Latency can be masked by 'thinking' states that educate the user.",
-      "Error states in AI must be conversational and restorative.",
-      "The command bar is replacing the navigation menu.",
-      "Context retention is the single biggest UX challenge in chat interfaces."
+      "Visibility of system status builds trust.",
+      "Match between system and the real world reduces cognitive load.",
+      "User control and freedom prevents frustration."
     ],
     application_tips: [
-      "When designing chat, always include 'suggested prompts' to reduce cognitive load.",
-      "Add a 'Regenerate' or 'Refine' control near every AI output.",
-      "Ensure your loading states clearly communicate what the AI is 'thinking'.",
-      "Test your UI with 'hallucination' scenarios—what happens if the data is wrong?",
-      "Design for variable height content blocks as AI output length is unpredictable."
+      "Run a heuristic evaluation on your current project.",
+      "Focus on error prevention before error recovery.",
+      "Ensure your help documentation is easy to search."
     ]
   },
   {
     id: 'fb_3',
-    title: 'Metric-Driven Design Strategy',
-    author: 'Julie Zhuo',
-    source: 'The Looking Glass',
+    title: 'The discipline of content strategy',
+    author: 'Kristina Halvorson',
+    source: 'A List Apart',
     type: 'Article',
     category: 'Strategy',
-    url: 'https://lg.substack.com/',
+    url: 'https://alistapart.com/article/thedisciplineofcontentstrategy/',
     summary: [
-      "Connecting design outcomes to business KPIs is the defining skill of senior product designers.",
-      "The article distinguishes between 'vanity metrics' (like clicks) and 'impact metrics' (like retention and revenue impact).",
-      "It provides a framework for mapping user journey steps to specific, measurable business goals."
+      "Content strategy plans for the creation, publication, and governance of useful, usable content.",
+      "It distinguishes between the 'editorial' strategy and the 'technical' strategy.",
+      "Content must be treated as a business asset."
     ],
     insights: [
-      "Designers must speak the language of 'conversion' and 'retention'.",
-      "North Star metrics should align the entire product team, not just product managers.",
-      "Qualitative data explains the 'why' behind the quantitative 'what'.",
-      "A/B testing should be used for optimization, not vision setting.",
-      "Leading indicators (usage) predict lagging indicators (revenue)."
+      "Content is not just copy; it's data and images too.",
+      "Governance is often the missing link in strategy.",
+      "Silos between design and content hurt the user experience."
     ],
     application_tips: [
-      "In your next design review, explicitly state the metric you expect to move.",
-      "Ask your PM for the 'data dashboard' related to your feature.",
-      "Map your current project to the company's Q3 OKRs.",
-      "Stop reporting 'usability success rates' to execs; report 'time saved'.",
-      "Create a hypothesis statement for every major design decision."
+      "Create a content audit spreadsheet.",
+      "Define who owns what content after launch.",
+      "Include real content in your wireframes, not Lorem Ipsum."
     ]
   },
   {
     id: 'fb_4',
-    title: 'Psychology of Dark Mode',
-    author: 'Nielsen Norman Group',
+    title: 'Design Systems 101',
+    author: 'NNGroup',
     source: 'NNGroup',
-    type: 'Video',
-    category: 'Visual Design',
-    url: 'https://www.nngroup.com/articles/dark-mode/',
+    type: 'Article',
+    category: 'Design Systems',
+    url: 'https://www.nngroup.com/articles/design-systems-101/',
     summary: [
-      "Dark mode isn't just an aesthetic choice; it has significant implications for accessibility and battery life.",
-      "The video breaks down the contrast ratios required for readable dark interfaces.",
-      "It warns against pure black backgrounds which can cause 'smearing' on OLED screens."
+      "A design system is a set of standards to manage design at scale by reducing redundancy.",
+      "It includes a pattern library and a style guide.",
+      "The goal is to aid in digital product design and development."
     ],
     insights: [
-      "Avoid pure black (#000000); use dark gray (#121212) for better depth.",
-      "Elevation in dark mode is depicted by lightness, not shadow.",
-      "Text weight may need to be decreased in dark mode to prevent visual vibration.",
-      "Desaturate primary colors to avoid eye strain.",
-      "Dark mode can actually reduce readability for users with astigmatism."
+      "Single source of truth is essential.",
+      "Documentation is as important as the components.",
+      "Adoption is the hardest part of a design system."
     ],
     application_tips: [
-      "Check your contrast ratios specifically for your dark theme palette.",
-      "Create a semantic color token named 'surface-0' through 'surface-5'.",
-      "Test your dark mode in a brightly lit room to check for glare issues.",
-      "Ensure images have a slight opacity reduction or overlay in dark mode.",
-      "Don't invert shadows; use lighter surfaces to show depth."
+      "Start small with a UI kit before building a full system.",
+      "Interview developers to see what they actually need.",
+      "Don't over-engineer components early on."
     ]
   }
 ];

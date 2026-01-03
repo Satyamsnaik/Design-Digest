@@ -1,7 +1,7 @@
 import React from 'react';
-import { DigestConfig, ExperienceLevel, Topic } from '../types';
+import { DigestConfig, ExperienceLevel, Topic, DateRange } from '../types';
 import { AVAILABLE_TOPICS } from '../constants';
-import { Sparkles, Layers, RefreshCw, Check } from 'lucide-react';
+import { RefreshCw, Check, Clock } from 'lucide-react';
 
 interface DigestConfiguratorProps {
   config: DigestConfig;
@@ -32,17 +32,21 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
     setConfig(prev => ({ ...prev, level }));
   };
 
+  const handleDateRangeChange = (dateRange: DateRange) => {
+    setConfig(prev => ({ ...prev, dateRange }));
+  };
+
+  const dateRanges: DateRange[] = ['Last 24 Hours', 'Last Week', 'Last Month', 'Last 6 Months', 'Any Time'];
+
   return (
     <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm max-w-4xl mx-auto mb-12 relative overflow-hidden group">
       <div className="relative z-10 flex flex-col md:flex-row gap-8 md:gap-12">
         
-        {/* Experience Level */}
-        <div className="flex-shrink-0 md:w-1/3 space-y-4">
-          <label className="flex items-center text-xs font-bold text-stone-400 uppercase tracking-widest">
-            <Layers className="w-3 h-3 mr-2" />
-            Curatorial Depth
-          </label>
-          <div className="flex flex-col gap-3">
+        {/* Left Column: Level & Time */}
+        <div className="flex-shrink-0 md:w-1/3 space-y-8">
+          
+          {/* Experience Level */}
+          <div className="space-y-4">
             {(['Beginner-Mid', 'Mid-Senior'] as ExperienceLevel[]).map((level) => {
               const isSelected = config.level === level;
               return (
@@ -50,7 +54,7 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
                   key={level}
                   onClick={() => handleLevelChange(level)}
                   className={`
-                    relative px-5 py-4 text-left rounded-xl text-sm font-medium transition-all duration-200 ease-out border
+                    w-full relative px-4 py-3 text-left rounded-xl text-sm font-medium transition-all duration-200 ease-out border
                     ${isSelected 
                       ? 'bg-stone-900 border-stone-900 text-white shadow-lg shadow-stone-200 transform scale-[1.02]' 
                       : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm'
@@ -58,26 +62,53 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
                   `}
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-serif text-lg tracking-tight block mb-0.5">
+                    <span className="font-serif text-base tracking-tight block mb-0.5">
                       {level === 'Beginner-Mid' ? 'Foundations' : 'Strategic'}
                     </span>
                     {isSelected && <Check className="w-4 h-4 text-amber-200" />}
                   </div>
-                  <span className={`text-xs ${isSelected ? 'text-stone-400' : 'text-stone-400'}`}>
-                    {level === 'Beginner-Mid' ? 'Best for Junior to Mid-level' : 'Best for Senior & Leads'}
+                  <span className={`text-[10px] uppercase tracking-wide opacity-80 ${isSelected ? 'text-stone-300' : 'text-stone-400'}`}>
+                    {level === 'Beginner-Mid' ? 'Junior to Mid-level' : 'Senior & Leads'}
                   </span>
                 </button>
               );
             })}
           </div>
+
+          {/* Freshness / Date Range */}
+          <div>
+            <div className="flex items-center text-xs font-bold uppercase tracking-widest text-stone-400 mb-3 pl-1">
+              <Clock className="w-3 h-3 mr-1.5" />
+              Freshness
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {dateRanges.map((range) => {
+                const isSelected = config.dateRange === range;
+                return (
+                  <button
+                    key={range}
+                    onClick={() => handleDateRangeChange(range)}
+                    className={`
+                      px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200
+                      ${isSelected
+                        ? 'bg-stone-100 border-stone-300 text-stone-900 font-semibold'
+                        : 'bg-white border-stone-100 text-stone-400 hover:border-stone-200 hover:text-stone-600'
+                      }
+                    `}
+                  >
+                    {range}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Topics */}
-        <div className="flex-grow space-y-4">
-          <label className="flex items-center text-xs font-bold text-stone-400 uppercase tracking-widest">
-            <Sparkles className="w-3 h-3 mr-2" />
-            Editorial Focus
-          </label>
+        {/* Right Column: Topics */}
+        <div className="flex-grow space-y-4 border-l border-stone-100 pl-0 md:pl-10">
+           <div className="flex items-center text-xs font-bold uppercase tracking-widest text-stone-400 mb-1 pl-1 md:hidden">
+              Topics
+            </div>
           <div className="flex flex-wrap gap-2.5">
             {AVAILABLE_TOPICS.map((topic) => {
               const isSelected = config.topics.includes(topic);
@@ -98,8 +129,8 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
               );
             })}
           </div>
-          <p className="text-xs text-stone-400 italic mt-2 pl-1">
-            * Select multiple topics or choose "Surprise Me" for an AI-curated mix.
+          <p className="text-xs text-stone-400 italic mt-4 pl-1 border-t border-dashed border-stone-200 pt-4">
+            Select one or more topics to customize your daily briefing.
           </p>
         </div>
       </div>

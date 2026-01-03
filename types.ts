@@ -1,5 +1,7 @@
 export type ExperienceLevel = 'Beginner-Mid' | 'Mid-Senior';
 
+export type DateRange = 'Last 24 Hours' | 'Last Week' | 'Last Month' | 'Last 6 Months' | 'Any Time';
+
 export type Topic = 
   | 'Product Thinking' 
   | 'AI in UX' 
@@ -25,6 +27,7 @@ export interface Article {
 export interface DigestConfig {
   level: ExperienceLevel;
   topics: Topic[];
+  dateRange: DateRange;
 }
 
 export interface DigestHistoryItem {

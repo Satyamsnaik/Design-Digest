@@ -5,7 +5,7 @@ import DigestConfigurator from './components/DigestConfigurator';
 import ArticleCard from './components/ArticleCard';
 import UrlAnalyzer from './components/UrlAnalyzer';
 import SkeletonLoader from './components/SkeletonLoader';
-import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote } from 'lucide-react';
+import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home } from 'lucide-react';
 import { DESIGN_QUOTES } from './constants';
 
 // Main App Component
@@ -25,7 +25,8 @@ function App() {
   // Configuration State
   const [config, setConfig] = useState<DigestConfig>({
     level: 'Mid-Senior',
-    topics: ['Random/Surprise Me']
+    topics: ['Random/Surprise Me'],
+    dateRange: 'Last Month'
   });
 
   // Memoized Daily Quote
@@ -119,7 +120,7 @@ function App() {
       const historyItem: DigestHistoryItem = {
         id: crypto.randomUUID(),
         timestamp: Date.now(),
-        config: { level: config.level, topics: [] }, // Empty topics for URL
+        config: { level: config.level, topics: [], dateRange: 'Any Time' }, // Empty topics for URL
         articles: [result],
         type: 'url'
       };
@@ -174,45 +175,53 @@ function App() {
   };
 
   // Render Helpers
-  const renderHeader = () => (
-    <header className="py-4 md:py-6 border-b border-stone-200 mb-8 bg-cream sticky top-0 z-50 bg-opacity-95 backdrop-blur-sm shadow-sm transition-all">
-      <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('dashboard')}>
-          <div className="bg-charcoal text-cream p-2 rounded-lg shadow-sm group-hover:bg-stone-800 group-hover:scale-105 transition-all">
-            <Newspaper className="w-4 h-4" />
-          </div>
-          <h1 className="font-serif text-lg md:text-xl font-bold text-charcoal tracking-tight group-hover:text-stone-600 transition-colors">
-            Daily Design Digest
-          </h1>
-        </div>
+  const renderFloatingControls = () => (
+    <div className="fixed top-6 right-6 z-50 flex flex-col items-end gap-4 pointer-events-none">
+      <div className="flex gap-2 pointer-events-auto bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-stone-200/50 hover:shadow-xl transition-shadow duration-300">
+        <button
+            onClick={() => setView('dashboard')}
+            className={`p-3 rounded-full transition-all duration-300 hover:bg-stone-100 active:scale-95 ${view === 'dashboard' ? 'text-charcoal bg-stone-50' : 'text-stone-400'}`}
+            title="Home"
+        >
+             <Home className="w-5 h-5" />
+        </button>
+        <div className="w-px h-6 bg-stone-200 my-auto"></div>
+        <button 
+          onClick={() => setView(view === 'saved' ? 'dashboard' : 'saved')}
+          className={`relative p-3 rounded-full transition-all duration-300 hover:bg-stone-100 active:scale-95 ${view === 'saved' ? 'text-amber-600 bg-amber-50' : 'text-stone-500'}`}
+          title="Read Later"
+        >
+          <Bookmark className={`w-5 h-5 ${view === 'saved' ? 'fill-current' : ''}`} />
+          {savedArticles.length > 0 && (
+            <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full border border-white"></span>
+          )}
+        </button>
         
-        <div className="flex space-x-2">
-          <button 
-            onClick={() => setView(view === 'saved' ? 'dashboard' : 'saved')}
-            className={`p-2.5 rounded-full transition-all duration-200 text-stone-700 active:scale-90 ${view === 'saved' ? 'bg-stone-200 shadow-inner' : 'hover:bg-stone-200 hover:shadow-sm'}`}
-            aria-label="Saved Articles"
-            title="Read Later"
-          >
-            {view === 'saved' ? <ArrowLeft className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
-          </button>
-          
-          <button 
-            onClick={() => setView(view === 'history' ? 'dashboard' : 'history')}
-            className={`p-2.5 rounded-full transition-all duration-200 text-stone-700 active:scale-90 ${view === 'history' ? 'bg-stone-200 shadow-inner' : 'hover:bg-stone-200 hover:shadow-sm'}`}
-            aria-label="History"
-            title="History"
-          >
-            {view === 'history' ? <ArrowLeft className="w-5 h-5" /> : <History className="w-5 h-5" />}
-          </button>
-        </div>
+        <button 
+          onClick={() => setView(view === 'history' ? 'dashboard' : 'history')}
+          className={`p-3 rounded-full transition-all duration-300 hover:bg-stone-100 active:scale-95 ${view === 'history' ? 'text-charcoal bg-stone-100' : 'text-stone-500'}`}
+          title="History"
+        >
+          <History className="w-5 h-5" />
+        </button>
       </div>
-    </header>
+    </div>
   );
 
   const renderDashboard = () => (
-    <div className="space-y-16 animate-in fade-in duration-700">
+    <div className="space-y-16 animate-in fade-in duration-700 pt-32">
+      {/* Hero Title - Replaces Top Nav */}
+      <section className="text-center space-y-4">
+        <h1 className="font-serif text-5xl md:text-7xl text-charcoal tracking-tight">
+          Daily Design Digest
+        </h1>
+        <p className="text-stone-500 text-lg md:text-xl font-serif italic max-w-xl mx-auto">
+          Your curated intellectual briefing for product design, strategy, and engineering.
+        </p>
+      </section>
+
       <section>
-        <h2 className="text-center font-serif text-2xl text-stone-800 mb-8 italic">
+        <h2 className="text-center font-sans text-xs font-bold tracking-widest text-stone-400 uppercase mb-8">
           Configure today's briefing
         </h2>
         <DigestConfigurator 
@@ -223,7 +232,7 @@ function App() {
         />
       </section>
 
-      <section className="border-t border-stone-200 pt-16">
+      <section className="border-t border-stone-200 border-dashed pt-16">
         <UrlAnalyzer onAnalyze={handleAnalyzeUrl} isLoading={loading} />
       </section>
     </div>
@@ -252,11 +261,11 @@ function App() {
   );
 
   const renderResults = () => (
-    <div className="animate-in slide-in-from-bottom-4 duration-500">
+    <div className="animate-in slide-in-from-bottom-4 duration-500 pt-24">
       <div className="mb-8 flex items-center justify-between">
         <button 
           onClick={() => setView('dashboard')}
-          className="flex items-center text-stone-500 hover:text-stone-900 transition-colors font-medium group"
+          className="flex items-center text-stone-500 hover:text-stone-900 transition-colors font-medium group bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           Back to Dashboard
@@ -275,15 +284,36 @@ function App() {
   );
 
   const renderSaved = () => (
-    <div className="animate-in fade-in duration-300">
-      <h2 className="font-serif text-3xl mb-8 text-charcoal">Read Later</h2>
+    <div className="animate-in fade-in duration-300 pt-24">
+       <div className="mb-8">
+        <button 
+          onClick={() => setView('dashboard')}
+          className="flex items-center text-stone-500 hover:text-stone-900 transition-colors font-medium group mb-6 bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200 w-fit"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          Back to Dashboard
+        </button>
+        <h2 className="font-serif text-4xl mb-2 text-charcoal">Read Later</h2>
+        <p className="text-stone-500">Your personal library of saved insights.</p>
+      </div>
       {renderArticleList(savedArticles, "No articles saved yet. Bookmark them from your daily digest.")}
     </div>
   );
 
   const renderHistory = () => (
-    <div className="max-w-3xl mx-auto pb-20 animate-in fade-in duration-300">
-      <h2 className="font-serif text-3xl mb-8 text-charcoal">Archive</h2>
+    <div className="max-w-3xl mx-auto pb-20 animate-in fade-in duration-300 pt-24">
+      <div className="mb-8">
+        <button 
+          onClick={() => setView('dashboard')}
+          className="flex items-center text-stone-500 hover:text-stone-900 transition-colors font-medium group mb-6 bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200 w-fit"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          Back to Dashboard
+        </button>
+        <h2 className="font-serif text-4xl mb-2 text-charcoal">Archive</h2>
+        <p className="text-stone-500">Previous briefings and analyses.</p>
+      </div>
+
       {history.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-stone-200 border-dashed">
           <Newspaper className="w-12 h-12 text-stone-300 mx-auto mb-4" />
@@ -309,7 +339,10 @@ function App() {
                     : `${item.articles.length} Articles • ${item.config.level}`}
                 </h3>
                 {item.type === 'feed' && (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
+                     <span className="text-xs bg-amber-50 px-2 py-1 rounded-md text-amber-700 font-medium">
+                        {item.config.dateRange}
+                     </span>
                     {item.config.topics.map(t => (
                       <span key={t} className="text-xs bg-stone-50 px-2 py-1 rounded-md text-stone-500">
                         {t}
@@ -341,8 +374,8 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen bg-cream font-sans text-charcoal selection:bg-stone-200 selection:text-black flex flex-col">
-      {renderHeader()}
+    <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 selection:text-black flex flex-col">
+      {renderFloatingControls()}
       
       <main className="max-w-6xl mx-auto px-4 flex-grow w-full">
         {view === 'dashboard' && renderDashboard()}
