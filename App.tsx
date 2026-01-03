@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, Component, ErrorInfo } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
 // Removed static import of geminiService to prevent startup crashes if SDK fails
@@ -12,13 +11,22 @@ import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home, Shuffle, L
 import { DESIGN_QUOTES } from './constants.ts';
 
 // --- Error Boundary Component ---
-class SimpleErrorBoundary extends Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
-  constructor(props: {children: React.ReactNode}) {
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
