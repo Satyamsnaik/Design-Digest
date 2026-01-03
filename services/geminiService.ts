@@ -3,13 +3,19 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Article, DigestConfig, ExperienceLevel, Topic, UserPreferences } from "../types";
 import { FALLBACK_ARTICLES } from "../constants";
 
-// 1. Initialize API
-// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
-const apiKey = process.env.API_KEY; 
-const ai = new GoogleGenAI({ apiKey });
+// Using Gemini 3 Pro for superior reasoning and tool use adherence to prevent broken links
+const MODEL_NAME = 'gemini-3-pro-preview';
 
-// Using Gemini 3 Flash for better reasoning and instruction following on text tasks
-const MODEL_NAME = 'gemini-3-flash-preview';
+/**
+ * Helper to get the AI instance with the user's stored key
+ */
+const getAiInstance = (): GoogleGenAI => {
+  const apiKey = localStorage.getItem('ddd_api_key');
+  if (!apiKey) {
+    throw new Error("API Key not found. Please enter your key.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 // 2. Define Response Schema
 // We define the schema for a single article and a list of articles to ensure strict JSON output.
@@ -26,9 +32,10 @@ const articleSchema = {
     url: { type: Type.STRING },
     summary: { type: Type.ARRAY, items: { type: Type.STRING } },
     insights: { type: Type.ARRAY, items: { type: Type.STRING } },
-    application_tips: { type: Type.ARRAY, items: { type: Type.STRING } }
+    application_tips: { type: Type.ARRAY, items: { type: Type.STRING } },
+    tweet_draft: { type: Type.STRING }
   },
-  required: ["id", "title", "author", "source", "type", "category", "url", "summary", "insights", "application_tips"]
+  required: ["id", "title", "author", "source", "type", "category", "url", "summary", "insights", "application_tips", "tweet_draft"]
 };
 
 const digestSchema = {
@@ -96,6 +103,7 @@ const getPreferenceContext = (prefs?: UserPreferences): string => {
  * Attempt 1: Search-Enabled Generation
  */
 async function generateWithSearch(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
+  const ai = getAiInstance();
   const { level, topics, dateRange } = config;
   
   let topicsStr = topics.includes('Random/Surprise Me') 
@@ -135,19 +143,18 @@ async function generateWithSearch(config: DigestConfig, prefs?: UserPreferences)
         "url": "THE_EXACT_SOURCE_URL_FOUND_BY_SEARCH",
         "summary": ["para1", "para2", "para3"],
         "insights": ["insight1", "insight2", "insight3", "insight4", "insight5", "insight6"],
-        "application_tips": ["tip1", "tip2", "tip3", "tip4", "tip5", "tip6"]
+        "application_tips": ["tip1", "tip2", "tip3", "tip4", "tip5", "tip6"],
+        "tweet_draft": "Write a high-signal, intellectual tweet (<280 chars) sharing the specific mental model or insight. Style: Provocative hook -> Core value. No hashtags. Do NOT include the URL."
       }
     ]
 
-    CRITICAL RULES FOR URLs:
-    1. The 'url' field MUST be the EXACT URL provided by the Google Search tool grounding. 
-    2. Do NOT fabricate, hallucinate, or guess URLs.
-    3. Do NOT use example.com or placeholder links.
-    4. If you cannot find a direct link to a specific article, try searching for the article title to get the correct URL.
-    5. If a valid URL is not found, do not include that article in the list.
-
-    CRITICAL FOR CONTENT:
-    In the 'insights' and 'application_tips' sections, provide COMPREHENSIVE lists. Do NOT limit to 3 items. Aim for 5-7 distinct, valuable points if the content supports it.
+    CRITICAL RULES FOR URL ACCURACY:
+    1. You MUST use the Google Search tool to find these articles.
+    2. The 'url' field MUST be the EXACT, FUNCTIONAL URL returned by the Google Search tool grounding.
+    3. DO NOT fabricate, hallucinate, or guess URLs. Do NOT construct URLs (e.g. 'medium.com/author/title').
+    4. If the search result does not explicitly provide a direct link to the article, DISCARD that item.
+    5. Do NOT use search result pages (google.com/search?...) or truncated URLs.
+    6. Quality over quantity: If you can only find 2 or 3 articles with VERIFIED URLs, return only those.
   `;
 
   try {
@@ -177,6 +184,7 @@ async function generateWithSearch(config: DigestConfig, prefs?: UserPreferences)
  * We still use Search to ensure links are valid.
  */
 async function generateBroadSearch(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
+  const ai = getAiInstance();
   const { level, topics } = config;
     
   let topicsStr = topics.includes('Random/Surprise Me') 
@@ -214,11 +222,16 @@ async function generateBroadSearch(config: DigestConfig, prefs?: UserPreferences
         "url": "THE_EXACT_URL",
         "summary": ["para1"],
         "insights": ["insight1"],
-        "application_tips": ["tip1"]
+        "application_tips": ["tip1"],
+        "tweet_draft": "Write a high-signal, intellectual tweet (<280 chars). Style: Provocative hook -> Core value. No hashtags. Do NOT include the URL."
       }
     ]
     
-    CRITICAL: The 'url' must be correct. Do not guess links.
+    CRITICAL: 
+    - The 'url' must be extracted directly from the search tool.
+    - Do not guess links. 
+    - Do not output broken links.
+    - If a link cannot be verified by the search tool, do not include the article.
   `;
 
   try {
@@ -245,31 +258,37 @@ async function generateBroadSearch(config: DigestConfig, prefs?: UserPreferences
  * Main function to fetch digest with fallback chain
  */
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-  // Attempt 1: Search (Strict Constraints)
   try {
-    const articles = await generateWithSearch(config, prefs);
-    if (articles && articles.length > 0) return articles;
-  } catch (e) { 
-    console.log("Primary search failed, trying broad search...", e);
-  }
+    // Attempt 1: Search (Strict Constraints)
+    try {
+      const articles = await generateWithSearch(config, prefs);
+      if (articles && articles.length > 0) return articles;
+    } catch (e) { 
+      console.log("Primary search failed, trying broad search...", e);
+    }
 
-  // Attempt 2: Broad Search (Relaxed Constraints, but still verifying links)
-  try {
-    const articles = await generateBroadSearch(config, prefs);
-    if (articles && articles.length > 0) return articles;
-  } catch (e) {
-    console.log("Broad search failed, using hardcoded fallback.", e);
-  }
+    // Attempt 2: Broad Search (Relaxed Constraints, but still verifying links)
+    try {
+      const articles = await generateBroadSearch(config, prefs);
+      if (articles && articles.length > 0) return articles;
+    } catch (e) {
+      console.log("Broad search failed, using hardcoded fallback.", e);
+    }
 
-  // Attempt 3: Hardcoded Fallback
-  console.warn("All AI attempts failed. Using fallback data.");
-  return FALLBACK_ARTICLES;
+    // Attempt 3: Hardcoded Fallback
+    console.warn("All AI attempts failed. Using fallback data.");
+    return FALLBACK_ARTICLES;
+  } catch (finalError) {
+      console.error("Critical failure in service:", finalError);
+      throw finalError; // Rethrow so UI can handle (or show Key error)
+  }
 }
 
 /**
  * URL Analyzer Service - Two-Step Robustness
  */
 export async function analyzeUrl(url: string): Promise<Article> {
+  const ai = getAiInstance();
   const commonInstructions = `
     OUTPUT FORMAT: 
     Return a SINGLE RAW JSON Article object.
@@ -286,7 +305,8 @@ export async function analyzeUrl(url: string): Promise<Article> {
       "url": "${url}",
       "summary": ["para1", "para2", "para3"],
       "insights": ["insight1", "insight2", "insight3", "insight4", "insight5", "insight6"],
-      "application_tips": ["tip1", "tip2", "tip3", "tip4", "tip5", "tip6"]
+      "application_tips": ["tip1", "tip2", "tip3", "tip4", "tip5", "tip6"],
+      "tweet_draft": "Write a high-signal, intellectual tweet (<280 chars) about this specific resource. Focus on the core mental model or 'aha' moment. Style: Hook -> Insight. No hashtags. Do NOT include the URL."
     }
 
     CRITICAL: In the 'insights' and 'application_tips' sections, provide COMPREHENSIVE lists. Do NOT limit to 3 items. Aim for 5-7 distinct, valuable points.
@@ -371,7 +391,8 @@ export async function analyzeUrl(url: string): Promise<Article> {
         url: url,
         summary: ['We could not analyze this URL at the moment.', 'Please try again later or check the URL.'],
         insights: ['N/A'],
-        application_tips: ['Try a different URL', 'Check your internet connection']
+        application_tips: ['Try a different URL', 'Check your internet connection'],
+        tweet_draft: "Check out this link!"
       };
     }
   }

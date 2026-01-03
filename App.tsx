@@ -1,16 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types';
 import { fetchLiveDigest, analyzeUrl } from './services/geminiService';
 import DigestConfigurator from './components/DigestConfigurator';
 import ArticleCard from './components/ArticleCard';
 import UrlAnalyzer from './components/UrlAnalyzer';
 import SkeletonLoader from './components/SkeletonLoader';
-import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home } from 'lucide-react';
+import ApiKeyInput from './components/ApiKeyInput';
+import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home, Shuffle, Key, LogOut } from 'lucide-react';
 import { DESIGN_QUOTES } from './constants';
+
+// ID Generator Helper (Polyfill for crypto.randomUUID in insecure contexts)
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
 
 // Main App Component
 function App() {
   // State
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [view, setView] = useState<'dashboard' | 'history' | 'result' | 'saved'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [loadingMode, setLoadingMode] = useState<'feed' | 'url'>('feed'); // Track loading context
@@ -24,16 +34,51 @@ function App() {
 
   // Configuration State
   const [config, setConfig] = useState<DigestConfig>({
-    level: 'Mid-Senior',
+    level: 'Mid-Level',
     topics: ['Random/Surprise Me'],
     dateRange: 'Last Month'
   });
 
-  // Memoized Daily Quote
-  const dailyQuote = useMemo(() => {
-    const randomIndex = Math.floor(Math.random() * DESIGN_QUOTES.length);
-    return DESIGN_QUOTES[randomIndex];
+  // Daily Quote State
+  const [currentQuote, setCurrentQuote] = useState(DESIGN_QUOTES[0]);
+
+  // Check for API Key on mount
+  useEffect(() => {
+    const key = localStorage.getItem('ddd_api_key');
+    if (key) {
+      setHasApiKey(true);
+    }
   }, []);
+
+  // Initialize random quote on mount
+  useEffect(() => {
+    setCurrentQuote(DESIGN_QUOTES[Math.floor(Math.random() * DESIGN_QUOTES.length)]);
+  }, []);
+
+  const handleSaveApiKey = (key: string) => {
+    localStorage.setItem('ddd_api_key', key);
+    setHasApiKey(true);
+  };
+
+  const handleResetApiKey = () => {
+    try {
+      localStorage.removeItem('ddd_api_key');
+    } catch (e) {
+      console.error("Error removing key from storage", e);
+    }
+    setHasApiKey(false);
+    setView('dashboard');
+    setArticles([]); 
+  };
+
+  const handleNewQuote = () => {
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * DESIGN_QUOTES.length);
+    } while (DESIGN_QUOTES[newIndex].text === currentQuote.text && DESIGN_QUOTES.length > 1);
+    
+    setCurrentQuote(DESIGN_QUOTES[newIndex]);
+  };
 
   // Load persistence
   useEffect(() => {
@@ -57,21 +102,37 @@ function App() {
     loadState();
   }, []);
 
-  // Save persistence
+  // Save persistence with error handling
   useEffect(() => {
-    localStorage.setItem('ddd_history', JSON.stringify(history));
+    try {
+      localStorage.setItem('ddd_history', JSON.stringify(history));
+    } catch (e) {
+      console.error("Failed to save history to local storage", e);
+    }
   }, [history]);
   
   useEffect(() => {
-    localStorage.setItem('ddd_saved', JSON.stringify(savedArticles));
+    try {
+      localStorage.setItem('ddd_saved', JSON.stringify(savedArticles));
+    } catch (e) {
+      console.error("Failed to save saved articles to local storage", e);
+    }
   }, [savedArticles]);
   
   useEffect(() => {
-    localStorage.setItem('ddd_liked', JSON.stringify(likedArticles));
+    try {
+      localStorage.setItem('ddd_liked', JSON.stringify(likedArticles));
+    } catch (e) {
+      console.error("Failed to save liked articles", e);
+    }
   }, [likedArticles]);
   
   useEffect(() => {
-    localStorage.setItem('ddd_disliked', JSON.stringify(dislikedArticles));
+    try {
+      localStorage.setItem('ddd_disliked', JSON.stringify(dislikedArticles));
+    } catch (e) {
+      console.error("Failed to save disliked articles", e);
+    }
   }, [dislikedArticles]);
 
   // Handlers
@@ -92,7 +153,7 @@ function App() {
       
       // Save to history
       const historyItem: DigestHistoryItem = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         timestamp: Date.now(),
         config: config,
         articles: results,
@@ -101,7 +162,10 @@ function App() {
       setHistory(prev => [historyItem, ...prev]);
     } catch (err) {
       console.error("Failed to generate digest", err);
-      // In a real app, show toast. Here fallback logic in service should prevent full crash.
+      if (err instanceof Error && err.message.includes("API Key")) {
+         alert("API Key missing or invalid. Please re-enter.");
+         setHasApiKey(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -118,7 +182,7 @@ function App() {
       setArticles([result]);
 
       const historyItem: DigestHistoryItem = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         timestamp: Date.now(),
         config: { level: config.level, topics: [], dateRange: 'Any Time' }, // Empty topics for URL
         articles: [result],
@@ -127,6 +191,10 @@ function App() {
       setHistory(prev => [historyItem, ...prev]);
     } catch (err) {
       console.error("Failed to analyze URL", err);
+      if (err instanceof Error && err.message.includes("API Key")) {
+        alert("API Key missing or invalid. Please re-enter.");
+        setHasApiKey(false);
+     }
     } finally {
       setLoading(false);
     }
@@ -150,7 +218,6 @@ function App() {
   };
 
   const handleRate = (article: Article, rating: 'up' | 'down' | null) => {
-    // Remove from both lists first to ensure clean slate
     const cleanLiked = likedArticles.filter(a => a.url !== article.url);
     const cleanDisliked = dislikedArticles.filter(a => a.url !== article.url);
     
@@ -177,10 +244,10 @@ function App() {
   // Render Helpers
   const renderFloatingControls = () => (
     <div className="fixed top-6 right-6 z-50 flex flex-col items-end gap-4 pointer-events-none">
-      <div className="flex gap-2 pointer-events-auto bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-stone-200/50 hover:shadow-xl transition-shadow duration-300">
+      <div className="flex gap-2 pointer-events-auto bg-white/90 backdrop-blur-md p-1.5 rounded-full shadow-lg border border-stone-200/50 hover:shadow-xl transition-all duration-300">
         <button
             onClick={() => setView('dashboard')}
-            className={`p-3 rounded-full transition-all duration-300 hover:bg-stone-100 active:scale-95 ${view === 'dashboard' ? 'text-charcoal bg-stone-50' : 'text-stone-400'}`}
+            className={`p-3 rounded-full transition-all duration-200 active:scale-90 ${view === 'dashboard' ? 'text-charcoal bg-stone-50' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'}`}
             title="Home"
         >
              <Home className="w-5 h-5" />
@@ -188,7 +255,7 @@ function App() {
         <div className="w-px h-6 bg-stone-200 my-auto"></div>
         <button 
           onClick={() => setView(view === 'saved' ? 'dashboard' : 'saved')}
-          className={`relative p-3 rounded-full transition-all duration-300 hover:bg-stone-100 active:scale-95 ${view === 'saved' ? 'text-amber-600 bg-amber-50' : 'text-stone-500'}`}
+          className={`relative p-3 rounded-full transition-all duration-200 active:scale-90 ${view === 'saved' ? 'text-amber-600 bg-amber-50' : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50'}`}
           title="Read Later"
         >
           <Bookmark className={`w-5 h-5 ${view === 'saved' ? 'fill-current' : ''}`} />
@@ -199,10 +266,20 @@ function App() {
         
         <button 
           onClick={() => setView(view === 'history' ? 'dashboard' : 'history')}
-          className={`p-3 rounded-full transition-all duration-300 hover:bg-stone-100 active:scale-95 ${view === 'history' ? 'text-charcoal bg-stone-100' : 'text-stone-500'}`}
+          className={`p-3 rounded-full transition-all duration-200 active:scale-90 ${view === 'history' ? 'text-charcoal bg-stone-100' : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50'}`}
           title="History"
         >
           <History className="w-5 h-5" />
+        </button>
+        
+        <div className="w-px h-6 bg-stone-200 my-auto"></div>
+        
+        <button 
+          onClick={handleResetApiKey}
+          className="p-3 rounded-full transition-all duration-200 hover:bg-red-50 hover:text-red-600 text-stone-400 active:scale-90 group"
+          title="Sign Out / Reset Key"
+        >
+          <LogOut className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
     </div>
@@ -210,13 +287,13 @@ function App() {
 
   const renderDashboard = () => (
     <div className="space-y-16 animate-in fade-in duration-700 pt-32">
-      {/* Hero Title - Replaces Top Nav */}
+      {/* Hero Title */}
       <section className="text-center space-y-4">
         <h1 className="font-serif text-5xl md:text-7xl text-charcoal tracking-tight">
           Daily Design Digest
         </h1>
         <p className="text-stone-500 text-lg md:text-xl font-serif italic max-w-xl mx-auto">
-          Your curated intellectual briefing for product design, strategy, and engineering.
+          Curated intelligence for product designers, strategists, and engineers.
         </p>
       </section>
 
@@ -240,12 +317,12 @@ function App() {
       {list.length === 0 ? (
          <div className="col-span-full text-center py-20 bg-white rounded-2xl border border-stone-200 border-dashed">
             <Newspaper className="w-12 h-12 text-stone-300 mx-auto mb-4" />
-            <p className="text-stone-500">{emptyMessage}</p>
+            <p className="text-stone-500 font-medium">{emptyMessage}</p>
          </div>
       ) : (
         list.map((article) => (
           <ArticleCard 
-            key={article.url} // Use URL as key for stability across lists
+            key={article.url}
             article={article} 
             isSaved={isArticleSaved(article)}
             rating={getArticleRating(article)}
@@ -262,10 +339,10 @@ function App() {
       <div className="mb-8 flex items-center justify-between">
         <button 
           onClick={() => setView('dashboard')}
-          className="flex items-center text-stone-500 hover:text-stone-900 transition-colors font-medium group bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200"
+          className="flex items-center text-stone-500 hover:text-stone-900 transition-all duration-200 font-medium group bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200 active:scale-95"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
+          Dashboard
         </button>
         <span className="text-stone-400 text-sm font-serif italic">
           {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -285,15 +362,15 @@ function App() {
        <div className="mb-8">
         <button 
           onClick={() => setView('dashboard')}
-          className="flex items-center text-stone-500 hover:text-stone-900 transition-colors font-medium group mb-6 bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200 w-fit"
+          className="flex items-center text-stone-500 hover:text-stone-900 transition-all duration-200 font-medium group mb-6 bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200 w-fit active:scale-95"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
+          Dashboard
         </button>
-        <h2 className="font-serif text-4xl mb-2 text-charcoal">Read Later</h2>
+        <h2 className="font-serif text-4xl mb-2 text-charcoal">Reading List</h2>
         <p className="text-stone-500">Your personal library of saved insights.</p>
       </div>
-      {renderArticleList(savedArticles, "No articles saved yet. Bookmark them from your daily digest.")}
+      {renderArticleList(savedArticles, "Your reading list is empty.")}
     </div>
   );
 
@@ -302,13 +379,13 @@ function App() {
       <div className="mb-8">
         <button 
           onClick={() => setView('dashboard')}
-          className="flex items-center text-stone-500 hover:text-stone-900 transition-colors font-medium group mb-6 bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200 w-fit"
+          className="flex items-center text-stone-500 hover:text-stone-900 transition-all duration-200 font-medium group mb-6 bg-white/50 px-4 py-2 rounded-full hover:bg-white border border-transparent hover:border-stone-200 w-fit active:scale-95"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
+          Dashboard
         </button>
         <h2 className="font-serif text-4xl mb-2 text-charcoal">Archive</h2>
-        <p className="text-stone-500">Previous briefings and analyses.</p>
+        <p className="text-stone-500">Previous briefings.</p>
       </div>
 
       {history.length === 0 ? (
@@ -327,8 +404,8 @@ function App() {
               <div>
                 <div className="flex items-center text-xs text-stone-400 mb-2 uppercase tracking-wider">
                   <Clock className="w-3 h-3 mr-1" />
-                  {new Date(item.timestamp).toLocaleString()}
-                  {item.type === 'url' && <span className="ml-2 bg-stone-100 text-stone-600 px-2 rounded-full">URL Analysis</span>}
+                  {new Date(item.timestamp).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                  {item.type === 'url' && <span className="ml-2 bg-stone-100 text-stone-600 px-2 rounded-full">URL</span>}
                 </div>
                 <h3 className="font-serif text-lg text-stone-800 group-hover:text-charcoal font-medium">
                   {item.type === 'url' 
@@ -340,7 +417,7 @@ function App() {
                      <span className="text-xs bg-amber-50 px-2 py-1 rounded-md text-amber-700 font-medium">
                         {item.config.dateRange}
                      </span>
-                    {item.config.topics.map(t => (
+                    {item.config.topics.slice(0, 3).map(t => (
                       <span key={t} className="text-xs bg-stone-50 px-2 py-1 rounded-md text-stone-500">
                         {t}
                       </span>
@@ -357,18 +434,38 @@ function App() {
   );
 
   const renderFooter = () => (
-    <footer className="mt-24 pb-12 text-center text-stone-400 px-4">
-      <div className="max-w-2xl mx-auto border-t border-stone-200 pt-8">
-        <Quote className="w-6 h-6 mx-auto mb-4 opacity-50 text-stone-300" />
-        <p className="font-serif text-lg md:text-xl text-stone-600 mb-2 italic">
-          "{dailyQuote.text}"
-        </p>
-        <p className="text-sm font-medium uppercase tracking-widest text-stone-400">
-          — {dailyQuote.author}
-        </p>
+    <footer className="mt-24 pb-12 text-center text-stone-400 px-4 group/footer">
+      <div className="max-w-2xl mx-auto border-t border-stone-200 pt-8 relative">
+        <div className="flex items-center justify-center gap-2 mb-4">
+            <Quote className="w-6 h-6 opacity-50 text-stone-300" />
+            <button 
+                onClick={handleNewQuote}
+                className="p-2 rounded-full text-stone-300 hover:text-stone-500 hover:bg-stone-100 opacity-0 group-hover/footer:opacity-100 transition-all duration-300 active:rotate-180"
+                title="Shuffle Quote"
+            >
+                <Shuffle className="w-4 h-4" />
+            </button>
+        </div>
+        <div className="min-h-[6rem] flex flex-col justify-center animate-in fade-in duration-500 key={currentQuote.text}">
+            <p className="font-serif text-lg md:text-xl text-stone-600 mb-2 italic">
+            "{currentQuote.text}"
+            </p>
+            <p className="text-sm font-medium uppercase tracking-widest text-stone-400">
+            — {currentQuote.author}
+            </p>
+        </div>
       </div>
     </footer>
   );
+
+  // Initial State: No API Key
+  if (!hasApiKey) {
+    return (
+        <div className="min-h-screen font-sans text-charcoal bg-stone-50">
+            <ApiKeyInput onSave={handleSaveApiKey} />
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 selection:text-black flex flex-col">

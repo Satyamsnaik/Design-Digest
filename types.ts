@@ -1,5 +1,5 @@
 
-export type ExperienceLevel = 'Beginner-Mid' | 'Mid-Senior';
+export type ExperienceLevel = 'Junior' | 'Mid-Level' | 'Senior';
 
 export type DateRange = 'Last 24 Hours' | 'Last Week' | 'Last Month' | 'Last 6 Months' | 'Any Time';
 
@@ -25,6 +25,7 @@ export interface Article {
   summary: string[];
   insights: string[];
   application_tips: string[];
+  tweet_draft?: string; // Pre-generated tweet content
 }
 
 export interface DigestConfig {
