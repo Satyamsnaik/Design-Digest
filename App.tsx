@@ -6,7 +6,7 @@ import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
 import UrlAnalyzer from './components/UrlAnalyzer.tsx';
 import SkeletonLoader from './components/SkeletonLoader.tsx';
-import ApiKeyInput from './components/ApiKeyInput.tsx';
+// ApiKeyInput removed as per guidelines
 import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home, Shuffle, LogOut } from 'lucide-react';
 import { DESIGN_QUOTES } from './constants.ts';
 
@@ -20,11 +20,11 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+    error: null
+  };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -67,7 +67,6 @@ const generateId = () => {
 // Main App Component
 function AppContent() {
   // State
-  const [hasApiKey, setHasApiKey] = useState(false);
   const [view, setView] = useState<'dashboard' | 'history' | 'result' | 'saved'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [loadingMode, setLoadingMode] = useState<'feed' | 'url'>('feed'); // Track loading context
@@ -89,42 +88,10 @@ function AppContent() {
   // Daily Quote State
   const [currentQuote, setCurrentQuote] = useState(DESIGN_QUOTES[0]);
 
-  // Check for API Key on mount - Safe Access
-  useEffect(() => {
-    try {
-      const key = localStorage.getItem('ddd_api_key');
-      if (key) {
-        setHasApiKey(true);
-      }
-    } catch (e) {
-      console.warn("Local storage access failed", e);
-    }
-  }, []);
-
   // Initialize random quote on mount
   useEffect(() => {
     setCurrentQuote(DESIGN_QUOTES[Math.floor(Math.random() * DESIGN_QUOTES.length)]);
   }, []);
-
-  const handleSaveApiKey = (key: string) => {
-    try {
-      localStorage.setItem('ddd_api_key', key);
-    } catch (e) {
-       console.warn("Could not save key to storage", e);
-    }
-    setHasApiKey(true);
-  };
-
-  const handleResetApiKey = () => {
-    try {
-      localStorage.removeItem('ddd_api_key');
-    } catch (e) {
-      console.error("Error removing key from storage", e);
-    }
-    setHasApiKey(false);
-    setView('dashboard');
-    setArticles([]); 
-  };
 
   const handleNewQuote = () => {
     let newIndex;
@@ -220,12 +187,7 @@ function AppContent() {
       setHistory(prev => [historyItem, ...prev]);
     } catch (err) {
       console.error("Failed to generate digest", err);
-      if (err instanceof Error && err.message.includes("API Key")) {
-         alert("API Key missing or invalid. Please re-enter.");
-         setHasApiKey(false);
-      } else {
-        alert("Failed to connect to AI service. Please check your network or API key.");
-      }
+      alert("Failed to connect to AI service. Please check your network or API key configuration.");
     } finally {
       setLoading(false);
     }
@@ -254,12 +216,7 @@ function AppContent() {
       setHistory(prev => [historyItem, ...prev]);
     } catch (err) {
       console.error("Failed to analyze URL", err);
-      if (err instanceof Error && err.message.includes("API Key")) {
-        alert("API Key missing or invalid. Please re-enter.");
-        setHasApiKey(false);
-     } else {
-        alert("Failed to analyze URL.");
-     }
+      alert("Failed to analyze URL.");
     } finally {
       setLoading(false);
     }
@@ -335,16 +292,6 @@ function AppContent() {
           title="History"
         >
           <History className="w-5 h-5" />
-        </button>
-        
-        <div className="w-px h-6 bg-stone-200 my-auto"></div>
-        
-        <button 
-          onClick={handleResetApiKey}
-          className="p-3 rounded-full transition-all duration-200 hover:bg-red-50 hover:text-red-600 text-stone-400 active:scale-90 group"
-          title="Sign Out / Reset Key"
-        >
-          <LogOut className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
     </div>
@@ -522,27 +469,6 @@ function AppContent() {
       </div>
     </footer>
   );
-
-  // Initial State: No API Key - ROBUST MODAL RENDERING
-  if (!hasApiKey) {
-    return (
-        <div style={{ 
-            position: 'fixed', 
-            top: 0,
-            left: 0,
-            width: '100vw', 
-            height: '100dvh', // Use dynamic viewport height for mobile
-            zIndex: 9999, 
-            backgroundColor: '#fafaf9', 
-            display: 'flex', 
-            flexDirection: 'column',
-            overflowY: 'auto',
-            overscrollBehavior: 'none'
-        }}>
-            <ApiKeyInput onSave={handleSaveApiKey} />
-        </div>
-    );
-  }
 
   return (
     <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 selection:text-black flex flex-col">

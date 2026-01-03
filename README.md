@@ -16,11 +16,12 @@ You need **Node.js** installed on your computer. [Download it here](https://node
    ```bash
    npm install
    ```
-3. Run the development server:
+3. **CRITICAL STEP**: Run the development server:
    ```bash
    npm run dev
    ```
-   Open the link shown (usually `http://localhost:5173`) to verify it works.
+4. Look at the terminal output. It will show a local URL (usually `http://localhost:5173`).
+5. **Open that localhost URL in your browser.**
 
 ### 2. How to Deploy to GitHub Pages
 
@@ -49,6 +50,15 @@ To make it live on the internet, you need to create a `dist` folder and upload t
      git subtree push --prefix dist origin gh-pages
      ```
    - Go to GitHub Settings > Pages and select the `gh-pages` branch.
+
+## ⚠️ Troubleshooting Errors
+
+**Error: "Failed to load module script... MIME type of 'application/octet-stream'"**
+- **Cause:** You are trying to run the app by double-clicking `index.html` or using a simple file server (like Python `http.server` or VS Code Live Server defaults). Browsers cannot read the `.tsx` code directly.
+- **Solution:** You MUST run `npm run dev` in your terminal and open the `localhost:5173` link provided. This command starts Vite, which translates the code for the browser automatically.
+
+**Error: "Tailwind CSS is not defined"**
+- **Solution:** Ensure you ran `npm install` to download Tailwind, and start the app with `npm run dev`.
 
 ## Features
 

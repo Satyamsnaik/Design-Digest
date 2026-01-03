@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Article, DigestConfig, ExperienceLevel, Topic, UserPreferences } from "../types.ts";
 import { FALLBACK_ARTICLES } from "../constants.ts";
@@ -10,11 +9,13 @@ const MODEL_NAME = 'gemini-3-pro-preview';
  * Helper to get the AI instance with the user's stored key
  */
 const getAiInstance = (): GoogleGenAI => {
-  const apiKey = localStorage.getItem('ddd_api_key');
+  // Guidelines: The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+  const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("API Key not found. Please enter your key.");
+    // Ideally the environment should be configured correctly.
+    console.warn("API Key not found in process.env.API_KEY");
   }
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: apiKey || '' });
 };
 
 // HELPER: Generate Schema dynamically to avoid top-level evaluation crashes
