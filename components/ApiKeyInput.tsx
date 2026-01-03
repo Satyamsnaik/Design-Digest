@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Key, ArrowRight, Clipboard, ShieldCheck, ExternalLink } from 'lucide-react';
 
 interface ApiKeyInputProps {
@@ -7,6 +8,14 @@ interface ApiKeyInputProps {
 
 const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
   const [key, setKey] = useState('');
+  const [isClipboardSupported, setIsClipboardSupported] = useState(false);
+
+  useEffect(() => {
+    // Check if the clipboard API is supported and available in this context
+    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.readText) {
+      setIsClipboardSupported(true);
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,6 +25,8 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
   };
 
   const handlePaste = async () => {
+    if (!isClipboardSupported) return;
+    
     try {
       const text = await navigator.clipboard.readText();
       if (text) setKey(text);
@@ -26,7 +37,7 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
         input.focus();
         input.select();
       }
-      alert("Please paste your key manually using Ctrl+V or Cmd+V");
+      alert("Unable to access clipboard automatically. Please paste manually.");
     }
   };
 
@@ -61,14 +72,16 @@ const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
                 required
               />
               
-              <button
-                type="button"
-                onClick={handlePaste}
-                className="absolute right-3 top-3 bottom-3 p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-200 rounded-lg transition-colors active:scale-95"
-                title="Paste from clipboard"
-              >
-                <Clipboard className="w-5 h-5" />
-              </button>
+              {isClipboardSupported && (
+                <button
+                  type="button"
+                  onClick={handlePaste}
+                  className="absolute right-3 top-3 bottom-3 p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-200 rounded-lg transition-colors active:scale-95"
+                  title="Paste from clipboard"
+                >
+                  <Clipboard className="w-5 h-5" />
+                </button>
+              )}
             </div>
 
             <button

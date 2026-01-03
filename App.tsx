@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, Component, ErrorInfo } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types';
-import { fetchLiveDigest, analyzeUrl } from './services/geminiService';
+// Removed static import of geminiService to prevent startup crashes if SDK fails
+// import { fetchLiveDigest, analyzeUrl } from './services/geminiService'; 
 import DigestConfigurator from './components/DigestConfigurator';
 import ArticleCard from './components/ArticleCard';
 import UrlAnalyzer from './components/UrlAnalyzer';
@@ -189,6 +190,9 @@ function AppContent() {
     setArticles([]); // Clear previous
 
     try {
+      // Dynamic import to prevent app crash if SDK is unavailable at startup
+      const { fetchLiveDigest } = await import('./services/geminiService');
+      
       const prefs: UserPreferences = {
         likedArticles,
         dislikedArticles
@@ -211,6 +215,8 @@ function AppContent() {
       if (err instanceof Error && err.message.includes("API Key")) {
          alert("API Key missing or invalid. Please re-enter.");
          setHasApiKey(false);
+      } else {
+        alert("Failed to connect to AI service. Please check your network or API key.");
       }
     } finally {
       setLoading(false);
@@ -224,6 +230,9 @@ function AppContent() {
     setArticles([]);
 
     try {
+      // Dynamic import
+      const { analyzeUrl } = await import('./services/geminiService');
+
       const result = await analyzeUrl(url);
       setArticles([result]);
 
@@ -240,6 +249,8 @@ function AppContent() {
       if (err instanceof Error && err.message.includes("API Key")) {
         alert("API Key missing or invalid. Please re-enter.");
         setHasApiKey(false);
+     } else {
+        alert("Failed to analyze URL.");
      }
     } finally {
       setLoading(false);
