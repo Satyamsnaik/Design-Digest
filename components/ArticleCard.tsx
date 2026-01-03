@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { ExternalLink, Lightbulb, Zap, BookOpen, PlayCircle, Bookmark, ThumbsUp, ThumbsDown, Twitter, Check } from 'lucide-react';
-import { Article } from '../types';
+import { Article } from '../types.ts';
 
 interface ArticleCardProps {
   article: Article;

@@ -1,5 +1,5 @@
 
-import { Article, Topic } from './types';
+import { Article, Topic } from './types.ts';
 
 export const AVAILABLE_TOPICS: Topic[] = [
   'Product Thinking',

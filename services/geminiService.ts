@@ -1,7 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Article, DigestConfig, ExperienceLevel, Topic, UserPreferences } from "../types";
-import { FALLBACK_ARTICLES } from "../constants";
+import { Article, DigestConfig, ExperienceLevel, Topic, UserPreferences } from "../types.ts";
+import { FALLBACK_ARTICLES } from "../constants.ts";
 
 // Using Gemini 3 Pro for superior reasoning and tool use adherence to prevent broken links
 const MODEL_NAME = 'gemini-3-pro-preview';

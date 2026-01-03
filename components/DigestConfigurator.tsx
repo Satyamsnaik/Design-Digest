@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { DigestConfig, ExperienceLevel, Topic, DateRange } from '../types';
-import { AVAILABLE_TOPICS } from '../constants';
+import { DigestConfig, ExperienceLevel, Topic, DateRange } from '../types.ts';
+import { AVAILABLE_TOPICS } from '../constants.ts';
 import { RefreshCw, Check, Clock } from 'lucide-react';
 
 interface DigestConfiguratorProps {

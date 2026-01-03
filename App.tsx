@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect, Component, ErrorInfo } from 'react';
-import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types';
+import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
 // Removed static import of geminiService to prevent startup crashes if SDK fails
-// import { fetchLiveDigest, analyzeUrl } from './services/geminiService'; 
-import DigestConfigurator from './components/DigestConfigurator';
-import ArticleCard from './components/ArticleCard';
-import UrlAnalyzer from './components/UrlAnalyzer';
-import SkeletonLoader from './components/SkeletonLoader';
-import ApiKeyInput from './components/ApiKeyInput';
+// import { fetchLiveDigest, analyzeUrl } from './services/geminiService.ts'; 
+import DigestConfigurator from './components/DigestConfigurator.tsx';
+import ArticleCard from './components/ArticleCard.tsx';
+import UrlAnalyzer from './components/UrlAnalyzer.tsx';
+import SkeletonLoader from './components/SkeletonLoader.tsx';
+import ApiKeyInput from './components/ApiKeyInput.tsx';
 import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home, Shuffle, LogOut } from 'lucide-react';
-import { DESIGN_QUOTES } from './constants';
+import { DESIGN_QUOTES } from './constants.ts';
 
 // --- Error Boundary Component ---
 class SimpleErrorBoundary extends Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
@@ -191,7 +191,7 @@ function AppContent() {
 
     try {
       // Dynamic import to prevent app crash if SDK is unavailable at startup
-      const { fetchLiveDigest } = await import('./services/geminiService');
+      const { fetchLiveDigest } = await import('./services/geminiService.ts');
       
       const prefs: UserPreferences = {
         likedArticles,
@@ -231,7 +231,7 @@ function AppContent() {
 
     try {
       // Dynamic import
-      const { analyzeUrl } = await import('./services/geminiService');
+      const { analyzeUrl } = await import('./services/geminiService.ts');
 
       const result = await analyzeUrl(url);
       setArticles([result]);
