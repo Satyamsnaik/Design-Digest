@@ -96,3 +96,11 @@ npx http-server .
 - **Compilation**: Babel Standalone (In-browser TSX compilation)
 - **AI Model**: Google Gemini 1.5 Pro / Gemini 3 (via `@google/genai` SDK)
 - **Icons**: Lucide React
+
+## FAQ / Troubleshooting
+
+**Q: I see a console warning: "You are using the in-browser Babel transformer..."**
+A: This is normal for this specific "No-Build" project setup. It means the browser is compiling your code on the fly, which is perfect for demos and GitHub Pages hosting but slower than a pre-compiled app. You can safely ignore this warning.
+
+**Q: The screen is white/blank.**
+A: Ensure you are serving the file via a local server (http://localhost...) and not opening it directly as a file (file://...). Browsers block module imports from the file system for security.
