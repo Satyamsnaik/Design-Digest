@@ -221,9 +221,6 @@ function App() {
       </section>
 
       <section>
-        <h2 className="text-center font-sans text-xs font-bold tracking-widest text-stone-400 uppercase mb-8">
-          Configure today's briefing
-        </h2>
         <DigestConfigurator 
           config={config} 
           setConfig={setConfig} 

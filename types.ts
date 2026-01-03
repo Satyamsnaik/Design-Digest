@@ -1,3 +1,4 @@
+
 export type ExperienceLevel = 'Beginner-Mid' | 'Mid-Senior';
 
 export type DateRange = 'Last 24 Hours' | 'Last Week' | 'Last Month' | 'Last 6 Months' | 'Any Time';
@@ -9,6 +10,8 @@ export type Topic =
   | 'Strategy' 
   | 'Design Systems' 
   | 'Research' 
+  | 'Product Design Case Studies'
+  | 'UX Design Case Studies'
   | 'Random/Surprise Me';
 
 export interface Article {

@@ -1,9 +1,10 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Article, DigestConfig, ExperienceLevel, Topic, UserPreferences } from "../types";
 import { FALLBACK_ARTICLES } from "../constants";
 
 // 1. Initialize API
-// Using the specific API key provided by the user for this session
+// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
 const apiKey = process.env.API_KEY; 
 const ai = new GoogleGenAI({ apiKey });
 
@@ -97,9 +98,14 @@ const getPreferenceContext = (prefs?: UserPreferences): string => {
 async function generateWithSearch(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
   const { level, topics, dateRange } = config;
   
-  const topicsStr = topics.includes('Random/Surprise Me') 
+  let topicsStr = topics.includes('Random/Surprise Me') 
     ? "trending Product Design, UX Strategy, and UI Engineering topics"
     : topics.join(", ");
+
+  // Explicitly prompt for redesigns if case studies are requested
+  if (topics.some(t => t.includes('Case Studies'))) {
+    topicsStr += ". Include detailed Product/UX Redesign case studies if available";
+  }
 
   const preferenceContext = getPreferenceContext(prefs);
 
@@ -172,9 +178,14 @@ async function generateWithSearch(config: DigestConfig, prefs?: UserPreferences)
  */
 async function generateBroadSearch(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
   const { level, topics } = config;
-    const topicsStr = topics.includes('Random/Surprise Me') 
+    
+  let topicsStr = topics.includes('Random/Surprise Me') 
     ? "foundational Product Design concepts"
     : topics.join(", ");
+  
+  if (topics.some(t => t.includes('Case Studies'))) {
+    topicsStr += " (including famous redesign case studies)";
+  }
 
   const preferenceContext = getPreferenceContext(prefs);
 
@@ -239,7 +250,7 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
     const articles = await generateWithSearch(config, prefs);
     if (articles && articles.length > 0) return articles;
   } catch (e) { 
-    console.log("Primary search failed, trying broad search...");
+    console.log("Primary search failed, trying broad search...", e);
   }
 
   // Attempt 2: Broad Search (Relaxed Constraints, but still verifying links)
@@ -247,7 +258,7 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
     const articles = await generateBroadSearch(config, prefs);
     if (articles && articles.length > 0) return articles;
   } catch (e) {
-    console.log("Broad search failed, using hardcoded fallback.");
+    console.log("Broad search failed, using hardcoded fallback.", e);
   }
 
   // Attempt 3: Hardcoded Fallback

@@ -1,3 +1,4 @@
+
 import { Article, Topic } from './types';
 
 export const AVAILABLE_TOPICS: Topic[] = [
@@ -7,6 +8,8 @@ export const AVAILABLE_TOPICS: Topic[] = [
   'Strategy',
   'Design Systems',
   'Research',
+  'Product Design Case Studies',
+  'UX Design Case Studies',
   'Random/Surprise Me'
 ];
 

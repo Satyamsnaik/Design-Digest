@@ -27,10 +27,10 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
               <span>Deep Dive Analysis</span>
             </div>
             <h3 className="font-serif text-3xl md:text-4xl text-stone-900 mb-3 leading-tight">
-              Analyze any resource
+              Analyze Resource
             </h3>
             <p className="text-stone-600 text-base leading-relaxed max-w-lg">
-              Found a long article or video? Paste the link below to extract key mental models, summary, and actionable tips instantly.
+              Instantly extract summaries, mental models, and actionable tips from any article or video link.
             </p>
           </div>
           
@@ -52,7 +52,7 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
             </div>
             <input
               type="url"
-              placeholder="Paste a URL from Medium, YouTube, NNGroup..."
+              placeholder="Paste article or video URL..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={isLoading}
