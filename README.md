@@ -1,74 +1,111 @@
 
 # Daily Design Digest (AI-Powered)
 
-A curated, AI-driven daily briefing tool for Product Designers, Strategists, and UI Engineers.
+An intelligent, editorial-style daily briefing for Product Designers. It uses Google's Gemini AI to curate articles, summarize content, and generate insights.
 
-## 🛠️ Installation & Hosting (The Reliable Way)
+---
 
-Because this app uses multiple TypeScript files, it must be **built** before it can run in a browser. Browsers cannot read `.tsx` files directly.
+## 🚀 How to Host This App (Beginner's Guide)
 
-### Prerequisites
-You need **Node.js** installed on your computer. [Download it here](https://nodejs.org/).
+Follow these steps to put this application on the web using **GitHub Pages**. You do not need to be a coding expert!
 
-### 1. Local Setup
-1. Open your terminal in this project folder.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. **CRITICAL STEP**: Run the development server:
-   ```bash
-   npm run dev
-   ```
-4. Look at the terminal output. It will show a local URL (usually `http://localhost:5173`).
-5. **Open that localhost URL in your browser.**
+### Step 1: Get Your Free AI Key
+This app needs a "brain" to work. We use Google's Gemini API.
+1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Click **Create API Key**.
+3. Copy the key string (it starts with `AIza...`).
+4. **Save this key** somewhere safe. You will need it in Step 3.
 
-### 2. How to Deploy to GitHub Pages
+### Step 2: Put This Code on GitHub
+1. Create a new repository on GitHub (name it something like `design-digest`).
+2. Upload all the files from this project to that repository.
 
-To make it live on the internet, you need to create a `dist` folder and upload that.
+### Step 3: Add Your API Key to GitHub
+To keep your key safe, we don't put it in the code. We give it to GitHub secretly.
+1. In your GitHub repository, go to the **Settings** tab (top right).
+2. On the left sidebar, scroll down to **Secrets and variables** and click **Actions**.
+3. Click the green button **New repository secret**.
+4. **Name**: `API_KEY` (Must be exactly this, all caps).
+5. **Secret**: Paste the key you copied in Step 1.
+6. Click **Add secret**.
 
-1. **Build the project**:
-   ```bash
-   npm run build
-   ```
-   This creates a `dist` folder with optimized HTML, CSS, and JS.
+### Step 4: Set Up Automatic Deployment
+We will create a helper script that builds the website automatically.
+1. In your repository, click the **Add file** button -> **Create new file**.
+2. Name the file exactly: `.github/workflows/deploy.yml`
+   *(Note: that is a dot at the start, then github, then workflows folder)*.
+3. Paste the following code into that file:
 
-2. **Deploy**:
-   
-   **Option A: Manual Upload**
-   - Go to your GitHub Repository.
-   - Upload the **contents** of the `dist` folder (index.html, assets folder, etc.) to the root of your repository (or a `gh-pages` branch).
-   - Enable GitHub Pages in Settings > Pages.
+```yaml
+name: Deploy to GitHub Pages
 
-   **Option B: Using Git (Recommended)**
-   - Remove the `dist` folder from `.gitignore` if it's there.
-   - Run these commands:
-     ```bash
-     npm run build
-     git add dist -f
-     git commit -m "Deploy build"
-     git subtree push --prefix dist origin gh-pages
-     ```
-   - Go to GitHub Settings > Pages and select the `gh-pages` branch.
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
 
-## ⚠️ Troubleshooting Errors
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-**Error: "Failed to load module script... MIME type of 'application/octet-stream'"**
-- **Cause:** You are trying to run the app by double-clicking `index.html` or using a simple file server (like Python `http.server` or VS Code Live Server defaults). Browsers cannot read the `.tsx` code directly.
-- **Solution:** You MUST run `npm run dev` in your terminal and open the `localhost:5173` link provided. This command starts Vite, which translates the code for the browser automatically.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
-**Error: "Tailwind CSS is not defined"**
-- **Solution:** Ensure you ran `npm install` to download Tailwind, and start the app with `npm run dev`.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+        env:
+          # This pulls the key from the secret you made in Step 3
+          API_KEY: ${{ secrets.API_KEY }}
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
 
-## Features
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+```
+4. Click **Commit changes** (green button).
 
-- **Personalized Content**: Choose from topics like Product Thinking, Design Systems, AI in UX, and more.
-- **Experience Levels**: Tailor content for Junior, Mid-Level, or Senior designers.
-- **URL Deep Dive**: Paste any article or video URL to get an instant breakdown.
-- **Save & History**: Bookmarking system and local history storage.
+### Step 5: Turn on GitHub Pages
+1. Go back to your repository **Settings**.
+2. On the left sidebar, click **Pages**.
+3. Under **Build and deployment** > **Source**, change the dropdown to **GitHub Actions** (it might default to "Deploy from a branch", change it to "GitHub Actions").
+4. GitHub will now automatically start building your website.
 
-## Tech Stack
-- **Vite**: Build tool for bundling.
-- **React 19**: UI Framework.
-- **Tailwind CSS**: Styling.
-- **Google GenAI SDK**: AI Intelligence.
+### Step 6: View Your Site!
+1. Click on the **Actions** tab at the top of your repo.
+2. You should see a workflow titled "Deploy to GitHub Pages" running (yellow circle) or completed (green checkmark).
+3. Once it's green, click on it, then click "deploy" to find your website URL, or go back to **Settings > Pages** to see your live link!
+
+---
+
+## 💻 Running Locally (Optional)
+If you want to run this on your own computer:
+
+1. Install [Node.js](https://nodejs.org/).
+2. Open a terminal in the project folder.
+3. Create a file named `.env` and add your key: `API_KEY=your_key_here`
+4. Run `npm install`
+5. Run `npm run dev`
