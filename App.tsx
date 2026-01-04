@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect, ErrorInfo } from 'react';
+import React, { useState, useEffect, ErrorInfo, Component } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
@@ -19,10 +19,13 @@ interface ErrorBoundaryState {
 
 // Fix: Explicitly use Component to ensure correct type resolution for props
 class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = {
-    hasError: false,
-    error: null
-  };
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null
+    };
+  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
