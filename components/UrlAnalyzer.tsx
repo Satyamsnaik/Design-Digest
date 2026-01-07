@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, ArrowRight, Link, Video, FileText, Clipboard } from 'lucide-react';
 
@@ -34,36 +35,36 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
 
   return (
     <div className="bg-stone-100 text-stone-800 rounded-2xl shadow-sm border border-stone-200 max-w-4xl mx-auto overflow-hidden transition-transform hover:scale-[1.002] duration-500">
-      <div className="p-8 md:p-12 relative">
+      <div className="p-6 md:p-12 relative">
         
-        <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-8 relative z-10">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-3 text-stone-500 text-xs font-bold tracking-widest uppercase">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 md:mb-10 gap-6 md:gap-8 relative z-10">
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start space-x-2 mb-3 text-stone-500 text-xs font-bold tracking-widest uppercase">
               <Link className="w-3 h-3" />
               <span>Deep Dive</span>
             </div>
-            <h3 className="font-serif text-3xl md:text-4xl text-stone-900 mb-3 leading-tight">
+            <h3 className="font-serif text-2xl md:text-4xl text-stone-900 mb-3 leading-tight">
               Analyze Link
             </h3>
-            <p className="text-stone-600 text-base leading-relaxed max-w-lg">
+            <p className="text-stone-600 text-sm md:text-base leading-relaxed max-w-lg mx-auto md:mx-0">
               Get summaries, mental models, and actionable tips from any article or video URL.
             </p>
           </div>
           
           {/* Visual indicators of supported content */}
           <div className="flex -space-x-4 opacity-70 grayscale hover:grayscale-0 transition-all duration-500 hover:scale-105">
-             <div className="w-12 h-12 rounded-full bg-white border-2 border-stone-200 flex items-center justify-center z-10 shadow-sm">
-                <FileText className="w-5 h-5 text-stone-600" />
+             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border-2 border-stone-200 flex items-center justify-center z-10 shadow-sm">
+                <FileText className="w-4 h-4 md:w-5 md:h-5 text-stone-600" />
              </div>
-             <div className="w-12 h-12 rounded-full bg-white border-2 border-stone-200 flex items-center justify-center z-20 shadow-sm">
-                <Video className="w-5 h-5 text-stone-600" />
+             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border-2 border-stone-200 flex items-center justify-center z-20 shadow-sm">
+                <Video className="w-4 h-4 md:w-5 md:h-5 text-stone-600" />
              </div>
           </div>
         </div>
         
         <form onSubmit={handleSubmit} className="relative group z-10">
           <div className="relative flex items-center">
-            <div className="absolute left-6 text-stone-400 group-focus-within:text-stone-600 transition-colors duration-300">
+            <div className="absolute left-4 md:left-6 text-stone-400 group-focus-within:text-stone-600 transition-colors duration-300">
               <Search className="w-5 h-5" />
             </div>
             <input
@@ -74,10 +75,10 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
               onChange={(e) => setUrl(e.target.value)}
               disabled={isLoading}
               required
-              className="w-full pl-16 pr-32 py-5 bg-white border border-stone-300 rounded-2xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all duration-300 shadow-sm font-sans text-base"
+              className="w-full pl-12 md:pl-16 pr-24 md:pr-32 py-4 md:py-5 bg-white border border-stone-300 rounded-2xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all duration-300 shadow-sm font-sans text-sm md:text-base"
             />
             
-            <div className="absolute right-3 top-3 bottom-3 flex items-center gap-2">
+            <div className="absolute right-2 md:right-3 top-2 md:top-3 bottom-2 md:bottom-3 flex items-center gap-2">
                 {!url && (
                     <button
                         type="button"

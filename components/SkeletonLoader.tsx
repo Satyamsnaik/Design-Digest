@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Loader2, Sparkles, CheckCircle2, Circle, BrainCircuit, PenTool, Search, Share2 } from 'lucide-react';
 
@@ -27,8 +28,8 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ mode = 'feed' }) => {
   const progress = Math.min(((currentStep + 0.5) / steps.length) * 100, 100);
 
   useEffect(() => {
-    // Variable timing to make it feel more "real"
-    const times = [1500, 2000, 1800, 1500, 1000];
+    // Accelerated timing to match faster Gemini Flash model response
+    const times = [600, 800, 700, 600, 500];
     
     const advance = () => {
       setCurrentStep((prev) => {
@@ -46,7 +47,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ mode = 'feed' }) => {
         timeoutId = setTimeout(() => {
           advance();
           scheduleNext(stepIndex + 1);
-        }, times[stepIndex] || 1500);
+        }, times[stepIndex] || 600);
       }
     };
 
@@ -62,10 +63,10 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ mode = 'feed' }) => {
       <div className="text-center mb-12 relative">
         {/* Central Pulse Animation */}
         <div className="relative inline-flex items-center justify-center mb-8">
-          <div className="absolute inset-0 bg-stone-200 rounded-full animate-[ping_2s_ease-in-out_infinite] opacity-40"></div>
-          <div className="absolute inset-0 bg-stone-100 rounded-full animate-[pulse_3s_ease-in-out_infinite]"></div>
+          <div className="absolute inset-0 bg-stone-200 rounded-full animate-[ping_1.5s_ease-in-out_infinite] opacity-40"></div>
+          <div className="absolute inset-0 bg-stone-100 rounded-full animate-[pulse_2s_ease-in-out_infinite]"></div>
           <div className="relative bg-white p-4 rounded-full shadow-sm border border-stone-100">
-             <CurrentIcon className="w-8 h-8 text-charcoal animate-[spin_4s_linear_infinite]" strokeWidth={1.5} />
+             <CurrentIcon className="w-8 h-8 text-charcoal animate-[spin_3s_linear_infinite]" strokeWidth={1.5} />
           </div>
         </div>
 
@@ -77,7 +78,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ mode = 'feed' }) => {
         <div className="max-w-xs mx-auto mt-6">
           <div className="h-1 w-full bg-stone-100 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-charcoal transition-all duration-700 ease-out"
+              className="h-full bg-charcoal transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -92,11 +93,11 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ mode = 'feed' }) => {
           return (
             <div 
               key={index} 
-              className={`flex items-center transition-all duration-500 ${
+              className={`flex items-center transition-all duration-300 ${
                 index > currentStep ? 'opacity-30 blur-[0.5px]' : 'opacity-100'
               }`}
             >
-              <div className={`mr-4 flex-shrink-0 transition-all duration-500 ${
+              <div className={`mr-4 flex-shrink-0 transition-all duration-300 ${
                 isCompleted ? 'text-green-600 scale-110' : isActive ? 'text-charcoal scale-110' : 'text-stone-300'
               }`}>
                 {isCompleted ? (
