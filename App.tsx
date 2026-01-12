@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ErrorInfo, ReactNode } from 'react';
+import React, { Component, useState, useEffect, ErrorInfo, ReactNode } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';

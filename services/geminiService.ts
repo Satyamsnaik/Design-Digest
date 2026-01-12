@@ -5,6 +5,10 @@ import { FALLBACK_ARTICLES } from "../constants.ts";
 // Switched to Flash model for faster inference and tool use
 const MODEL_NAME = 'gemini-3-flash-preview';
 
+const getApiKey = (): string | undefined => {
+  return process.env.API_KEY;
+}
+
 const getPreferenceContext = (prefs?: UserPreferences): string => {
   if (!prefs) return "";
   let context = "";
@@ -39,7 +43,7 @@ const articleSchema = {
 };
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-  const apiKey = process.env.API_KEY;
+  const apiKey = getApiKey();
   if (!apiKey) {
     console.error("No API Key found");
     throw new Error("Missing API Key");
@@ -93,7 +97,7 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 }
 
 export async function analyzeUrl(url: string): Promise<Article> {
-  const apiKey = process.env.API_KEY;
+  const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error("Missing API Key");
   }

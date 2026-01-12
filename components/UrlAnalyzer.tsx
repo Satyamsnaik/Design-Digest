@@ -17,22 +17,6 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
     }
   };
 
-  const handlePaste = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) setUrl(text);
-    } catch (err) {
-      console.warn('Clipboard access denied or failed:', err);
-      // Fallback interaction
-      const input = document.getElementById('url-input') as HTMLInputElement;
-      if (input) {
-        input.focus();
-        input.select();
-      }
-      alert("Please paste your URL manually using Ctrl+V or Cmd+V");
-    }
-  };
-
   return (
     <div className="bg-stone-100 text-stone-800 rounded-2xl shadow-sm border border-stone-200 max-w-4xl mx-auto overflow-hidden transition-transform hover:scale-[1.002] duration-500">
       <div className="p-6 md:p-12 relative">
@@ -75,21 +59,10 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
               onChange={(e) => setUrl(e.target.value)}
               disabled={isLoading}
               required
-              className="w-full pl-12 md:pl-16 pr-24 md:pr-32 py-4 md:py-5 bg-white border border-stone-300 rounded-2xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all duration-300 shadow-sm font-sans text-sm md:text-base"
+              className="w-full pl-12 md:pl-16 pr-16 md:pr-20 py-4 md:py-5 bg-white border border-stone-300 rounded-2xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all duration-300 shadow-sm font-sans text-sm md:text-base"
             />
             
             <div className="absolute right-2 md:right-3 top-2 md:top-3 bottom-2 md:bottom-3 flex items-center gap-2">
-                {!url && (
-                    <button
-                        type="button"
-                        onClick={handlePaste}
-                        className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-xl transition-colors active:scale-95"
-                        title="Paste from clipboard"
-                        disabled={isLoading}
-                    >
-                        <Clipboard className="w-5 h-5" />
-                    </button>
-                )}
                 <button
                 type="submit"
                 disabled={isLoading || !url}
