@@ -22,6 +22,7 @@ export interface Article {
   type: 'Article' | 'Video';
   category: string;
   url: string;
+  date?: string; // Publication date
   summary: string[];
   insights: string[];
   application_tips: string[];

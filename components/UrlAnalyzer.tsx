@@ -43,7 +43,7 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
               <Link className="w-3 h-3" />
               <span>Deep Dive</span>
             </div>
-            <h3 className="font-serif text-2xl md:text-4xl text-stone-900 mb-3 leading-tight">
+            <h3 className="font-sans text-2xl md:text-4xl font-bold text-stone-900 mb-3 leading-tight">
               Analyze Link
             </h3>
             <p className="text-stone-600 text-sm md:text-base leading-relaxed max-w-lg mx-auto md:mx-0">

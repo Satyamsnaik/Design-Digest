@@ -70,7 +70,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ mode = 'feed' }) => {
           </div>
         </div>
 
-        <h3 className="font-serif text-3xl text-charcoal mb-3 animate-in fade-in slide-in-from-bottom-2 duration-500 key={currentStep}">
+        <h3 className="font-sans text-3xl font-bold text-charcoal mb-3 animate-in fade-in slide-in-from-bottom-2 duration-500 key={currentStep}">
           {steps[currentStep].text}...
         </h3>
         
