@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DigestConfig, ExperienceLevel, Topic, DateRange } from '../types.ts';
 import { AVAILABLE_TOPICS } from '../constants.ts';
@@ -63,14 +62,14 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
       
       <div className="space-y-8">
         
-        {/* Experience Level Section */}
+        {/* Experience Level Section - Tab Style */}
         <div>
           <div className="flex items-center text-[10px] font-extrabold uppercase tracking-widest text-stone-400 px-1 mb-3">
              <Signal className="w-3 h-3 mr-1.5" />
              Experience Level
           </div>
           
-          <div className="grid grid-cols-3 gap-2">
+          <div className="bg-stone-100/70 p-1.5 rounded-2xl flex relative">
             {levels.map((lvl) => {
               const isSelected = config.level === lvl.id;
               return (
@@ -78,10 +77,10 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
                   key={lvl.id}
                   onClick={() => handleLevelChange(lvl.id)}
                   className={`
-                    px-2 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border text-center relative
+                    flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 relative z-10
                     ${isSelected 
-                      ? 'bg-stone-200 text-charcoal border-stone-300 shadow-inner' 
-                      : 'bg-white text-stone-500 border-stone-200 hover:border-stone-300 hover:text-charcoal hover:bg-stone-50'
+                      ? 'bg-white text-charcoal shadow-sm ring-1 ring-black/5' 
+                      : 'text-stone-400 hover:text-stone-600'
                     }
                   `}
                 >
@@ -99,7 +98,7 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
           </div>
         </div>
 
-        {/* Topics Section */}
+        {/* Topics Section - Lighter Pills */}
         <div>
            <div className="flex items-center text-[10px] font-extrabold uppercase tracking-widest text-stone-400 px-1 mb-3">
              <Layers className="w-3 h-3 mr-1.5" />
@@ -114,10 +113,10 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
                     key={topic}
                     onClick={() => toggleTopic(topic)}
                     className={`
-                      px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 border
+                      px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border
                       ${isSelected
-                        ? 'bg-stone-200 border-stone-300 text-charcoal shadow-inner transform scale-105'
-                        : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300 hover:text-charcoal hover:shadow-sm'
+                        ? 'bg-stone-100 border-stone-200 text-charcoal'
+                        : 'bg-white border-transparent text-stone-400 hover:text-stone-600 hover:bg-stone-50'
                       }
                     `}
                   >
@@ -128,7 +127,7 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
            </div>
         </div>
 
-        {/* Timeframe Section */}
+        {/* Timeframe Section - Lighter Pills */}
         <div>
            <div className="flex items-center text-[10px] font-extrabold uppercase tracking-widest text-stone-400 px-1 mb-3">
               <Clock className="w-3 h-3 mr-1.5" />
@@ -151,10 +150,10 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
                     key={range}
                     onClick={() => handleDateRangeChange(range)}
                     className={`
-                      px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 active:scale-95 border
+                      px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border
                       ${isSelected 
-                        ? 'bg-stone-200 text-charcoal border-stone-300 shadow-inner transform scale-105 z-10' 
-                        : 'bg-white text-stone-500 border-stone-200 hover:border-stone-300 hover:text-charcoal hover:bg-stone-50'
+                        ? 'bg-stone-100 text-charcoal border-stone-200' 
+                        : 'bg-white text-stone-400 border-transparent hover:text-stone-600 hover:bg-stone-50'
                       }
                     `}
                   >

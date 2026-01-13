@@ -1,11 +1,11 @@
-import React, { useState, useEffect, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useEffect, ErrorInfo, ReactNode, Component } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
 import UrlAnalyzer from './components/UrlAnalyzer.tsx';
 import SkeletonLoader from './components/SkeletonLoader.tsx';
-import { Newspaper, History, Clock, Bookmark, Quote, Home, Shuffle, Sparkles, AlertTriangle, Link, Tag, ChevronRight, Filter } from 'lucide-react';
-import { DESIGN_QUOTES, FALLBACK_ARTICLES } from './constants.ts';
+import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter } from 'lucide-react';
+import { FALLBACK_ARTICLES } from './constants.ts';
 
 // --- Error Boundary Component ---
 interface ErrorBoundaryProps {
@@ -17,15 +17,12 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed: Explicitly extend React.Component and declare state property to satisfy TypeScript
-class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null
-    };
-  }
+// Fixed: Explicitly extend Component to ensure props are typed correctly
+class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false,
+    error: null
+  };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -84,11 +81,7 @@ function AppContent() {
     dateRange: 'Last Month'
   });
 
-  const [currentQuote, setCurrentQuote] = useState(DESIGN_QUOTES[0]);
-
   useEffect(() => {
-    setCurrentQuote(DESIGN_QUOTES[Math.floor(Math.random() * DESIGN_QUOTES.length)]);
-    
     // Load local data
     try {
       const h = localStorage.getItem('ddd_history');
@@ -110,10 +103,6 @@ function AppContent() {
     localStorage.setItem('ddd_liked', JSON.stringify(likedArticles));
     localStorage.setItem('ddd_disliked', JSON.stringify(dislikedArticles));
   }, [history, savedArticles, likedArticles, dislikedArticles]);
-
-  const handleNewQuote = () => {
-    setCurrentQuote(DESIGN_QUOTES[Math.floor(Math.random() * DESIGN_QUOTES.length)]);
-  };
 
   const handleGenerateDigest = async () => {
     setLoading(true);
@@ -256,7 +245,7 @@ function AppContent() {
           <div className="space-y-8 md:space-y-12 animate-in fade-in duration-700">
             <section className="text-center space-y-4 md:space-y-6">
               <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-charcoal leading-tight pt-2 tracking-tight">
-                Daily Design <span className="text-stone-400 font-light">Digest</span>
+                Daily Design Digest
               </h1>
               <p className="text-stone-500 text-lg md:text-xl font-sans font-light max-w-lg mx-auto leading-relaxed px-4">
                 Curated intelligence for product designers, strategists, and engineers.
@@ -379,17 +368,6 @@ function AppContent() {
            </div>
         )}
       </main>
-
-      <footer className="mt-12 md:mt-24 pb-12 text-center text-stone-400 group/footer px-4">
-        <div className="max-w-2xl mx-auto border-t border-stone-200/50 pt-12 relative">
-          <Quote className="w-5 h-5 opacity-40 text-stone-400 mx-auto mb-6" />
-          <p className="font-sans text-lg md:text-xl text-stone-600 mb-3">"{currentQuote.text}"</p>
-          <p className="text-xs font-bold uppercase tracking-widest">— {currentQuote.author}</p>
-          <button onClick={handleNewQuote} className="mt-6 p-2 rounded-full text-stone-300 hover:text-stone-500 opacity-0 group-hover/footer:opacity-100 transition-all">
-            <Shuffle className="w-4 h-4" />
-          </button>
-        </div>
-      </footer>
     </div>
   );
 }
