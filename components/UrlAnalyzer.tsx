@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Search, ArrowRight, Link, Video, FileText, Clipboard } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Search, ArrowRight, Link, Video, FileText, X, Loader2 } from 'lucide-react';
 
 interface UrlAnalyzerProps {
   onAnalyze: (url: string) => void;
@@ -9,6 +9,8 @@ interface UrlAnalyzerProps {
 
 const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
   const [url, setUrl] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,62 +19,146 @@ const UrlAnalyzer: React.FC<UrlAnalyzerProps> = ({ onAnalyze, isLoading }) => {
     }
   };
 
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUrl('');
+    inputRef.current?.focus();
+  };
+
+  const handleContainerClick = () => {
+    inputRef.current?.focus();
+  };
+
+  const isValidUrl = url.trim().length > 3;
+
   return (
-    <div className="bg-stone-100 text-stone-800 rounded-2xl shadow-sm border border-stone-200 max-w-4xl mx-auto overflow-hidden transition-transform hover:scale-[1.002] duration-500">
-      <div className="p-6 md:p-12 relative">
-        
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8 md:mb-10 gap-6 md:gap-8 relative z-10">
-          <div className="flex-1 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start space-x-2 mb-3 text-stone-500 text-xs font-bold tracking-widest uppercase">
-              <Link className="w-3 h-3" />
-              <span>Deep Dive</span>
+    <div className="w-full max-w-4xl mx-auto mb-16 relative z-10">
+      
+      {/* Context Label */}
+      <div className="flex items-center justify-center gap-2 mb-4 opacity-0 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+         <div className="h-px w-8 bg-stone-300"></div>
+         <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Deep Dive Analysis</span>
+         <div className="h-px w-8 bg-stone-300"></div>
+      </div>
+
+      <div 
+        className={`
+            relative group transition-all duration-500 ease-out transform
+            ${isFocused ? 'scale-[1.01]' : 'hover:scale-[1.005]'}
+        `}
+        onClick={handleContainerClick}
+      >
+        {/* Glow Effect */}
+        <div className={`
+            absolute -inset-0.5 bg-gradient-to-r from-stone-200 via-charcoal/5 to-stone-200 rounded-[2rem] blur opacity-0 transition-opacity duration-500
+            ${isFocused ? 'opacity-100' : 'group-hover:opacity-50'}
+        `}></div>
+
+        <div className="relative bg-white rounded-[1.8rem] shadow-xl border border-stone-100 overflow-hidden">
+            <div className="flex flex-col md:flex-row p-3 md:p-4 gap-3 md:gap-4 items-stretch">
+                
+                {/* Reactive Icon Box */}
+                <div className={`
+                    hidden md:flex flex-shrink-0 items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500
+                    ${isFocused || url.length > 0 
+                        ? 'bg-charcoal text-white rotate-0 shadow-lg' 
+                        : 'bg-stone-50 text-stone-300 -rotate-3 scale-95'
+                    }
+                `}>
+                    {isLoading ? (
+                        <Loader2 className="w-7 h-7 animate-spin" />
+                    ) : url.length > 0 ? (
+                        <Link className="w-7 h-7" />
+                    ) : (
+                        <Search className="w-7 h-7" />
+                    )}
+                </div>
+
+                {/* Input Area */}
+                <div className="flex-grow flex flex-col justify-center relative min-h-[4rem] px-2">
+                     <form onSubmit={handleSubmit} className="w-full">
+                         <div className="relative h-10 flex items-center">
+                            {/* Floating Label */}
+                            <div className={`
+                                absolute left-0 pointer-events-none transition-all duration-300 ease-out origin-left
+                                ${isFocused || url.length > 0
+                                    ? '-top-3 text-[9px] font-bold tracking-widest uppercase text-stone-400' 
+                                    : 'top-1/2 -translate-y-1/2 text-lg text-stone-400 font-medium'
+                                }
+                            `}>
+                                {isFocused || url.length > 0 ? 'Target URL' : 'Paste article or video link...'}
+                            </div>
+
+                            <input
+                                ref={inputRef}
+                                id="url-input"
+                                type="url"
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                                onFocus={() => setIsFocused(true)}
+                                onBlur={() => setIsFocused(false)}
+                                disabled={isLoading}
+                                className="w-full bg-transparent border-none p-0 text-xl md:text-2xl font-sans font-medium text-charcoal placeholder-transparent focus:ring-0 focus:outline-none"
+                                autoComplete="off"
+                            />
+                         </div>
+                     </form>
+                     
+                     {/* Supported Types Indicators */}
+                     <div className={`
+                        flex items-center gap-3 mt-1 overflow-hidden transition-all duration-300
+                        ${isFocused || url.length === 0 ? 'max-h-8 opacity-100' : 'max-h-0 opacity-0'}
+                     `}>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-300">
+                             <FileText className="w-3 h-3" /> Articles
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-stone-300">
+                             <Video className="w-3 h-3" /> YouTube
+                        </div>
+                     </div>
+                </div>
+
+                {/* Right Actions */}
+                <div className="flex items-center gap-2 mt-2 md:mt-0 justify-end">
+                    
+                    {/* Clear Button */}
+                    <div className={`transition-all duration-300 ${url.length > 0 && !isLoading ? 'opacity-100 scale-100' : 'opacity-0 scale-75 w-0 overflow-hidden'}`}>
+                         <button 
+                            onClick={handleClear}
+                            className="p-3 rounded-full hover:bg-stone-100 text-stone-300 hover:text-stone-500 transition-colors"
+                            type="button"
+                            title="Clear"
+                         >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    {/* Analyze Button */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading || !isValidUrl}
+                        className={`
+                            relative group/btn flex items-center justify-center h-14 md:h-16 rounded-2xl font-bold tracking-wide transition-all duration-500 ease-out shadow-sm overflow-hidden
+                            ${isValidUrl 
+                                ? 'bg-charcoal text-white hover:shadow-xl hover:scale-105 px-8 w-full md:w-auto' 
+                                : 'bg-stone-100 text-stone-300 px-4 w-full md:w-16 cursor-not-allowed'
+                            }
+                        `}
+                    >
+                        {isLoading ? (
+                             <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : isValidUrl ? (
+                            <div className="flex items-center gap-2">
+                                <span>Analyze</span>
+                                <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                            </div>
+                        ) : (
+                            <ArrowRight className="w-6 h-6" />
+                        )}
+                    </button>
+                </div>
             </div>
-            <h3 className="font-sans text-2xl md:text-4xl font-bold text-stone-900 mb-3 leading-tight">
-              Analyze Link
-            </h3>
-            <p className="text-stone-600 text-sm md:text-base leading-relaxed max-w-lg mx-auto md:mx-0">
-              Get summaries, mental models, and actionable tips from any article or video URL.
-            </p>
-          </div>
-          
-          {/* Visual indicators of supported content */}
-          <div className="flex -space-x-4 opacity-70 grayscale hover:grayscale-0 transition-all duration-500 hover:scale-105">
-             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border-2 border-stone-200 flex items-center justify-center z-10 shadow-sm">
-                <FileText className="w-4 h-4 md:w-5 md:h-5 text-stone-600" />
-             </div>
-             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white border-2 border-stone-200 flex items-center justify-center z-20 shadow-sm">
-                <Video className="w-4 h-4 md:w-5 md:h-5 text-stone-600" />
-             </div>
-          </div>
         </div>
-        
-        <form onSubmit={handleSubmit} className="relative group z-10">
-          <div className="relative flex items-center">
-            <div className="absolute left-4 md:left-6 text-stone-400 group-focus-within:text-stone-600 transition-colors duration-300">
-              <Search className="w-5 h-5" />
-            </div>
-            <input
-              id="url-input"
-              type="url"
-              placeholder="Paste article or video URL..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              disabled={isLoading}
-              required
-              className="w-full pl-12 md:pl-16 pr-16 md:pr-20 py-4 md:py-5 bg-white border border-stone-300 rounded-2xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all duration-300 shadow-sm font-sans text-sm md:text-base"
-            />
-            
-            <div className="absolute right-2 md:right-3 top-2 md:top-3 bottom-2 md:bottom-3 flex items-center gap-2">
-                <button
-                type="submit"
-                disabled={isLoading || !url}
-                className="aspect-square flex items-center justify-center bg-charcoal text-white rounded-xl hover:bg-black disabled:opacity-20 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-90 px-3"
-                >
-                <ArrowRight className="w-5 h-5" />
-                </button>
-            </div>
-          </div>
-        </form>
       </div>
     </div>
   );

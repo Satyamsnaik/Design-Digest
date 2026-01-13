@@ -4,7 +4,7 @@ import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
 import UrlAnalyzer from './components/UrlAnalyzer.tsx';
 import SkeletonLoader from './components/SkeletonLoader.tsx';
-import { Newspaper, History, Clock, ArrowLeft, Bookmark, Quote, Home, Shuffle, Sparkles, AlertTriangle, Link, Tag, ChevronRight, Filter } from 'lucide-react';
+import { Newspaper, History, Clock, Bookmark, Quote, Home, Shuffle, Sparkles, AlertTriangle, Link, Tag, ChevronRight, Filter } from 'lucide-react';
 import { DESIGN_QUOTES, FALLBACK_ARTICLES } from './constants.ts';
 
 // --- Error Boundary Component ---
@@ -17,7 +17,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -193,19 +193,13 @@ function AppContent() {
     <nav className="fixed top-0 inset-x-0 z-50 px-4 py-4 md:py-6 pointer-events-none">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         
-        {/* Left: Back Button */}
+        {/* Left: Title for Saved/History */}
         <div className="pointer-events-auto min-w-[40px] min-h-[44px] flex items-center">
-          {view !== 'dashboard' && (
-            <button 
-              onClick={() => setView('dashboard')}
-              className="flex items-center gap-2 bg-white/90 backdrop-blur-xl pl-3 pr-5 py-2.5 rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-stone-200/50 hover:bg-white hover:border-stone-300 hover:shadow-md transition-all group"
-            >
-              <div className="bg-stone-100 rounded-full p-1 group-hover:bg-stone-200 transition-colors">
-                 <ArrowLeft className="w-4 h-4 text-stone-600 group-hover:text-charcoal" />
-              </div>
-              <span className="font-sans text-sm font-medium text-stone-600 group-hover:text-charcoal tracking-wide">Dashboard</span>
-            </button>
-          )}
+             {(view === 'saved' || view === 'history') && (
+               <h1 className="font-display text-2xl md:text-3xl font-bold text-charcoal tracking-tight capitalize animate-in fade-in slide-in-from-left-4 duration-500">
+                 {view === 'saved' ? 'Saved Articles' : 'History'}
+               </h1>
+             )}
         </div>
 
         {/* Right: Navigation Tabs */}
@@ -313,7 +307,6 @@ function AppContent() {
 
         {(view === 'saved' || view === 'history') && (
            <div className="animate-in fade-in duration-300 max-w-4xl mx-auto">
-             <h2 className="font-display text-5xl md:text-7xl mb-8 md:mb-12 text-charcoal tracking-tight capitalize">{view}</h2>
              
              {view === 'saved' && (
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 pb-20">

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { Article, DigestConfig, UserPreferences } from "../types.ts";
 import { FALLBACK_ARTICLES } from "../constants.ts";
@@ -89,7 +90,8 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 
     const text = response.text;
     if (!text) return FALLBACK_ARTICLES;
-    return JSON.parse(text) as Article[];
+    const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleanText) as Article[];
   } catch (error) {
     console.error("Gemini fetch failed:", error);
     return FALLBACK_ARTICLES;
@@ -128,7 +130,8 @@ export async function analyzeUrl(url: string): Promise<Article> {
     
     const text = response.text;
     if (!text) throw new Error("Empty response");
-    return JSON.parse(text) as Article;
+    const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleanText) as Article;
   } catch (error) {
     console.error("Analysis failed:", error);
     throw error;
