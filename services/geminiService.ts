@@ -3,37 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Article, DigestConfig, UserPreferences } from "../types.ts";
 import { FALLBACK_ARTICLES } from "../constants.ts";
 
-const MODEL_NAME = 'gemini-3-pro-preview';
-
-/**
- * Clean JSON string if the model returns markdown code blocks or conversational text
- */
-const cleanJsonString = (str: string): string => {
-  let cleaned = str.trim();
-  const codeBlockRegex = /```json\s*([\s\S]*?)\s*```/;
-  const match = cleaned.match(codeBlockRegex);
-  if (match) {
-    cleaned = match[1];
-  } else {
-    const firstBrace = cleaned.indexOf('{');
-    const firstBracket = cleaned.indexOf('[');
-    let startIndex = -1;
-    let endIndex = -1;
-
-    if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
-        startIndex = firstBracket;
-        endIndex = cleaned.lastIndexOf(']');
-    } else if (firstBrace !== -1) {
-        startIndex = firstBrace;
-        endIndex = cleaned.lastIndexOf('}');
-    }
-
-    if (startIndex !== -1 && endIndex !== -1) {
-        cleaned = cleaned.substring(startIndex, endIndex + 1);
-    }
-  }
-  return cleaned;
-};
+// Switched to Flash model for faster inference and tool use
+const MODEL_NAME = 'gemini-3-flash-preview';
 
 const getPreferenceContext = (prefs?: UserPreferences): string => {
   if (!prefs) return "";
@@ -49,8 +20,27 @@ const getPreferenceContext = (prefs?: UserPreferences): string => {
   return context;
 };
 
+const articleSchema = {
+    type: Type.OBJECT,
+    properties: {
+        id: { type: Type.STRING },
+        title: { type: Type.STRING },
+        author: { type: Type.STRING },
+        source: { type: Type.STRING },
+        type: { type: Type.STRING },
+        category: { type: Type.STRING },
+        url: { type: Type.STRING },
+        date: { type: Type.STRING },
+        summary: { type: Type.ARRAY, items: { type: Type.STRING } },
+        insights: { type: Type.ARRAY, items: { type: Type.STRING } },
+        application_tips: { type: Type.ARRAY, items: { type: Type.STRING } },
+        tweet_draft: { type: Type.STRING }
+    },
+    required: ["id", "title", "author", "source", "type", "category", "url", "summary", "insights", "application_tips"],
+};
+
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-  // Use direct process.env.API_KEY access as per guidelines
+  // Guidelines: API key must be obtained exclusively from process.env.API_KEY and used directly.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const { level, topics, dateRange } = config;
   
@@ -58,32 +48,19 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
   const preferenceContext = getPreferenceContext(prefs);
 
   const prompt = `
-    ACT AS: A Senior Product Design Lead.
+    ACT AS: A World-Class Senior Product Design Lead and Curator.
     TASK: Find 4 unique, high-quality design articles or videos.
-    DATE CONSTRAINT: Published within ${dateRange}.
-    TARGET AUDIENCE LEVEL: ${level}.
-    TOPICS: ${topicsStr}.
+    
+    STRICT CONSTRAINTS:
+    1. DATE: Published within ${dateRange}.
+    2. LEVEL: ${level} (If Senior: avoid generic 101 content, look for deep dives, case studies, and strategy).
+    3. TOPICS: ${topicsStr}.
+    4. QUALITY: Sources must be reputable (e.g., NNGroup, A List Apart, Smashing Mag, Case Studies, Substack leaders).
     ${preferenceContext}
     
     OUTPUT FORMAT: Return a valid JSON array of 4 Article objects. 
-    Use Search to find EXACT, working URLs. No fabrications.
-    
-    Schema:
-    [
-      {
-        "id": "uuid",
-        "title": "Title",
-        "author": "Author",
-        "source": "Publication Name",
-        "type": "Article" | "Video",
-        "category": "Category",
-        "url": "DIRECT_URL",
-        "summary": ["Point 1", "Point 2", "Point 3"],
-        "insights": ["Insight 1", "Insight 2", "Insight 3"],
-        "application_tips": ["Tip 1", "Tip 2", "Tip 3"],
-        "tweet_draft": "Mental model hook -> Value prop."
-      }
-    ]
+    IMPORTANT: For EVERY article, you MUST generate EXACTLY 5 distinct 'insights' and EXACTLY 5 distinct 'application_tips'.
+    Use Google Search to find ACTUAL, CURRENT URLs.
   `;
 
   try {
@@ -91,13 +68,21 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
       model: MODEL_NAME,
       contents: prompt,
       config: {
-        tools: [{ googleSearch: {} }]
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: Type.ARRAY,
+            items: articleSchema
+        },
+        // Optimize for speed by disabling thinking budget for this task
+        thinkingConfig: { thinkingBudget: 0 }
       },
     });
 
     const text = response.text;
     if (!text) return FALLBACK_ARTICLES;
-    return JSON.parse(cleanJsonString(text)) as Article[];
+    const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleanText) as Article[];
   } catch (error) {
     console.error("Gemini fetch failed:", error);
     return FALLBACK_ARTICLES;
@@ -105,38 +90,61 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 }
 
 export async function analyzeUrl(url: string): Promise<Article> {
-  // Use direct process.env.API_KEY access as per guidelines
+  // Guidelines: API key must be obtained exclusively from process.env.API_KEY and used directly.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  const isYoutube = url.toLowerCase().includes('youtube') || url.toLowerCase().includes('youtu.be');
+  
+  let contextInstruction = "";
+  if (isYoutube) {
+    contextInstruction = `
+      CONTEXT: This is a YouTube video URL.
+      CRITICAL: You MUST use Google Search to find the *actual* video title, description, and transcript/content.
+      - Query suggestion: "summary of youtube video ${url}" or search for the video ID.
+      - Do not hallucinate. If you cannot find the specific video content via search, state that in the summary.
+      - 'application_tips' should be step-by-step instructions derived from the video content.
+      - Ensure the 'type' field is set to 'Video'.
+    `;
+  } else {
+    contextInstruction = `
+      CONTEXT: This is a web article.
+      CRITICAL: You MUST use Google Search to find the *actual* article content.
+      - Verify the content matches the URL.
+      - Extract the core content.
+      - Ensure the 'type' field is set to 'Article'.
+    `;
+  }
+
   const prompt = `
-    Analyze this URL: ${url}
-    Act as a Product Designer. Extract core value and insights.
+    Analyze this specific URL: ${url}
     
-    OUTPUT FORMAT: Return a single JSON Article object.
-    {
-      "id": "uuid",
-      "title": "Title",
-      "author": "Author",
-      "source": "Source",
-      "type": "Article",
-      "category": "Category",
-      "url": "${url}",
-      "summary": ["..."],
-      "insights": ["..."],
-      "application_tips": ["..."],
-      "tweet_draft": "Insight hook."
-    }
+    Act as a Product Designer & Technical Lead. 
+    Your goal is to accurately extract the content from the provided URL and analyze it.
+    
+    ${contextInstruction}
+    
+    REQUIREMENTS:
+    1. Summary: 3 concise paragraphs describing the actual content found.
+    2. Insights: Extract EXACTLY 5 distinct core insights.
+    3. Application Tips: Generate EXACTLY 5 actionable, practical steps.
   `;
 
   try {
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: prompt,
-      config: { tools: [{ googleSearch: {} }] },
+      config: { 
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: articleSchema,
+        // Removed thinkingConfig: { thinkingBudget: 0 } to allow better tool usage for specific URL analysis
+      },
     });
     
     const text = response.text;
     if (!text) throw new Error("Empty response");
-    return JSON.parse(cleanJsonString(text)) as Article;
+    const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleanText) as Article;
   } catch (error) {
     console.error("Analysis failed:", error);
     throw error;

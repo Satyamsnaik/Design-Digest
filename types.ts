@@ -22,9 +22,11 @@ export interface Article {
   type: 'Article' | 'Video';
   category: string;
   url: string;
+  date?: string; // Publication date
   summary: string[];
   insights: string[];
   application_tips: string[];
+  code_snippets?: string[]; // New field for technical content
   tweet_draft?: string; // Pre-generated tweet content
 }
 
