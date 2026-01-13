@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ErrorInfo, ReactNode, Component } from 'react';
+import React, { useState, useEffect, ErrorInfo, ReactNode } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
@@ -17,8 +17,8 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed: Explicitly extend Component to ensure props are typed correctly
-class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Fixed: Explicitly extend React.Component to ensure props are typed correctly and avoid import issues
+class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null
@@ -131,7 +131,9 @@ function AppContent() {
       setHistory(prev => [historyItem, ...prev]);
     } catch (err) {
       console.error("Fetch failed:", err);
-      alert("Briefing generation failed. Please check your internet connection or verify your API key.");
+      // Even if it fails, we might want to show fallback if not already handled
+      setIsFallbackMode(true); 
+      setArticles(FALLBACK_ARTICLES);
     } finally {
       setLoading(false);
     }
@@ -160,6 +162,7 @@ function AppContent() {
     } catch (err) {
       console.error("Analysis failed:", err);
       alert("URL Analysis failed.");
+      setView('dashboard'); // Go back on error
     } finally {
       setLoading(false);
     }

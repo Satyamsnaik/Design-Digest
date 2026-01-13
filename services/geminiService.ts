@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Article, DigestConfig, UserPreferences } from "../types.ts";
 import { FALLBACK_ARTICLES } from "../constants.ts";
@@ -40,7 +39,6 @@ const articleSchema = {
 };
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-  // Guidelines: API key must be obtained exclusively from process.env.API_KEY and used directly.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const { level, topics, dateRange } = config;
   
@@ -90,7 +88,6 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 }
 
 export async function analyzeUrl(url: string): Promise<Article> {
-  // Guidelines: API key must be obtained exclusively from process.env.API_KEY and used directly.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const isYoutube = url.toLowerCase().includes('youtube') || url.toLowerCase().includes('youtu.be');
