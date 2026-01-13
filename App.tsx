@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useEffect, ErrorInfo, ReactNode } from 'react';
 import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
@@ -17,7 +17,8 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Fixed: Explicitly extend React.Component and declare state property to satisfy TypeScript
+class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -37,7 +38,7 @@ class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-8 text-center min-h-screen flex flex-col items-center justify-center bg-cream">
+        <div className="p-8 text-center min-h-screen flex flex-col items-center justify-center bg-[#FEFBF6]">
           <h2 className="text-2xl font-bold text-red-600 mb-2">Something went wrong.</h2>
           <p className="text-stone-600 mb-4">Please try refreshing the page.</p>
           <pre className="text-xs bg-white border border-stone-200 p-4 rounded text-left overflow-auto max-w-lg w-full">
@@ -202,14 +203,14 @@ function AppContent() {
              )}
         </div>
 
-        {/* Right: Navigation Tabs */}
-        <div className="pointer-events-auto shadow-[0_2px_8px_rgba(0,0,0,0.04)] bg-white/90 backdrop-blur-xl p-1.5 rounded-full border border-stone-200/50 flex gap-1 items-center">
+        {/* Right: Navigation Tabs - iOS Glassmorphism Style */}
+        <div className="pointer-events-auto shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] bg-white/40 backdrop-blur-2xl p-1.5 rounded-full border border-white/50 flex gap-1 items-center transition-all duration-300 hover:bg-white/50">
              <button
                 onClick={() => setView('dashboard')}
                 className={`p-2.5 rounded-full transition-all duration-300 ${
                   view === 'dashboard' 
-                    ? 'bg-stone-100 text-charcoal shadow-inner' 
-                    : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
+                    ? 'bg-white/80 text-charcoal shadow-sm ring-1 ring-black/5' 
+                    : 'text-stone-500 hover:text-stone-800 hover:bg-white/40'
                 }`}
                 title="Home"
             >
@@ -219,8 +220,8 @@ function AppContent() {
               onClick={() => setView('saved')}
               className={`relative p-2.5 rounded-full transition-all duration-300 ${
                 view === 'saved' 
-                  ? 'bg-amber-50 text-amber-900 shadow-inner' 
-                  : 'text-stone-400 hover:text-amber-700 hover:bg-amber-50/50'
+                  ? 'bg-amber-100/80 text-amber-900 shadow-sm ring-1 ring-amber-200' 
+                  : 'text-stone-500 hover:text-amber-700 hover:bg-amber-50/50'
               }`}
               title="Saved Articles"
             >
@@ -233,8 +234,8 @@ function AppContent() {
               onClick={() => setView('history')}
               className={`p-2.5 rounded-full transition-all duration-300 ${
                 view === 'history' 
-                  ? 'bg-stone-100 text-charcoal shadow-inner' 
-                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-50'
+                  ? 'bg-white/80 text-charcoal shadow-sm ring-1 ring-black/5' 
+                  : 'text-stone-500 hover:text-stone-800 hover:bg-white/40'
               }`}
               title="History"
             >
@@ -246,7 +247,7 @@ function AppContent() {
   );
 
   return (
-    <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 flex flex-col bg-cream relative">
+    <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 flex flex-col bg-transparent relative">
       
       {renderNavBar()}
       
@@ -254,12 +255,8 @@ function AppContent() {
         {view === 'dashboard' && (
           <div className="space-y-8 md:space-y-12 animate-in fade-in duration-700">
             <section className="text-center space-y-4 md:space-y-6">
-              <div className="inline-flex items-center justify-center p-2 bg-stone-100 rounded-full mb-2">
-                  <Sparkles className="w-4 h-4 text-stone-400" />
-              </div>
-              <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-charcoal leading-[0.9] pt-2 tracking-tight">
-                Daily Design <br/>
-                <span className="text-stone-400 font-light">Digest</span>
+              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-charcoal leading-tight pt-2 tracking-tight">
+                Daily Design <span className="text-stone-400 font-light">Digest</span>
               </h1>
               <p className="text-stone-500 text-lg md:text-xl font-sans font-light max-w-lg mx-auto leading-relaxed px-4">
                 Curated intelligence for product designers, strategists, and engineers.

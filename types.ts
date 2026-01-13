@@ -26,6 +26,7 @@ export interface Article {
   summary: string[];
   insights: string[];
   application_tips: string[];
+  code_snippets?: string[]; // New field for technical content
   tweet_draft?: string; // Pre-generated tweet content
 }
 

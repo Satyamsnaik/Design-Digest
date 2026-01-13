@@ -6,10 +6,6 @@ import { FALLBACK_ARTICLES } from "../constants.ts";
 // Switched to Flash model for faster inference and tool use
 const MODEL_NAME = 'gemini-3-flash-preview';
 
-const getApiKey = (): string | undefined => {
-  return process.env.API_KEY;
-}
-
 const getPreferenceContext = (prefs?: UserPreferences): string => {
   if (!prefs) return "";
   let context = "";
@@ -38,19 +34,15 @@ const articleSchema = {
         summary: { type: Type.ARRAY, items: { type: Type.STRING } },
         insights: { type: Type.ARRAY, items: { type: Type.STRING } },
         application_tips: { type: Type.ARRAY, items: { type: Type.STRING } },
+        code_snippets: { type: Type.ARRAY, items: { type: Type.STRING } },
         tweet_draft: { type: Type.STRING }
     },
     required: ["id", "title", "author", "source", "type", "category", "url", "summary", "insights", "application_tips"],
 };
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    console.error("No API Key found");
-    throw new Error("Missing API Key");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  // Guidelines: API key must be obtained exclusively from process.env.API_KEY and used directly.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const { level, topics, dateRange } = config;
   
   const topicsStr = topics.join(", ");
@@ -99,20 +91,46 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 }
 
 export async function analyzeUrl(url: string): Promise<Article> {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error("Missing API Key");
+  // Guidelines: API key must be obtained exclusively from process.env.API_KEY and used directly.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  const isYoutube = url.toLowerCase().includes('youtube') || url.toLowerCase().includes('youtu.be');
+  
+  let contextInstruction = "";
+  if (isYoutube) {
+    contextInstruction = `
+      CONTEXT: This is a YouTube video URL.
+      CRITICAL: You MUST use Google Search to find the *actual* video title, description, and transcript/content.
+      - Query suggestion: "summary of youtube video ${url}" or search for the video ID.
+      - Do not hallucinate. If you cannot find the specific video content via search, state that in the summary.
+      - If it is a coding or design tutorial, EXTRACT CODE SNIPPETS or specific technical steps into the 'code_snippets' array.
+      - 'application_tips' should be step-by-step instructions derived from the video content.
+      - Ensure the 'type' field is set to 'Video'.
+    `;
+  } else {
+    contextInstruction = `
+      CONTEXT: This is a web article.
+      CRITICAL: You MUST use Google Search to find the *actual* article content.
+      - Verify the content matches the URL.
+      - Extract the core content.
+      - If the article contains code blocks or technical commands, add them to 'code_snippets'.
+      - Ensure the 'type' field is set to 'Article'.
+    `;
   }
 
-  const ai = new GoogleGenAI({ apiKey });
   const prompt = `
-    Analyze this URL: ${url}
-    Act as a Product Designer. Extract core value and insights.
+    Analyze this specific URL: ${url}
+    
+    Act as a Product Designer & Technical Lead. 
+    Your goal is to accurately extract the content from the provided URL and analyze it.
+    
+    ${contextInstruction}
     
     REQUIREMENTS:
-    1. Summary: 3 concise paragraphs.
-    2. Insights: Extract EXACTLY 5 distinct core insights (mental models, facts, or strategic takeaways).
-    3. Application Tips: Generate EXACTLY 5 actionable, practical steps for a designer to apply this knowledge.
+    1. Summary: 3 concise paragraphs describing the actual content found.
+    2. Insights: Extract EXACTLY 5 distinct core insights.
+    3. Application Tips: Generate EXACTLY 5 actionable, practical steps.
+    4. Code Snippets: Include any relevant code, commands, or framework specific syntax found.
   `;
 
   try {
@@ -123,8 +141,7 @@ export async function analyzeUrl(url: string): Promise<Article> {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: articleSchema,
-        // Optimize for speed
-        thinkingConfig: { thinkingBudget: 0 }
+        // Removed thinkingConfig: { thinkingBudget: 0 } to allow better tool usage for specific URL analysis
       },
     });
     

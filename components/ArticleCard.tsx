@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ExternalLink, Lightbulb, Zap, BookOpen, PlayCircle, Bookmark, ThumbsUp, ThumbsDown, Twitter, Check, Calendar } from 'lucide-react';
+import { ExternalLink, Lightbulb, Zap, BookOpen, PlayCircle, Bookmark, ThumbsUp, ThumbsDown, Twitter, Check, Calendar, Code, Copy } from 'lucide-react';
 import { Article } from '../types.ts';
 
 interface ArticleCardProps {
@@ -19,6 +19,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
   onRate 
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<number | null>(null);
 
   const handleCopyTweet = () => {
     // Tweet body only, no URL appending as per request
@@ -29,6 +30,13 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
       setTimeout(() => setCopied(false), 2000);
     }).catch(err => {
       console.error("Failed to copy tweet", err);
+    });
+  };
+
+  const handleCopyCode = (code: string, index: number) => {
+    navigator.clipboard.writeText(code).then(() => {
+        setCopiedCode(index);
+        setTimeout(() => setCopiedCode(null), 2000);
     });
   };
 
@@ -80,6 +88,32 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Code Snippets Section (if available) */}
+      {article.code_snippets && article.code_snippets.length > 0 && (
+          <div className="px-5 md:px-6 pb-4">
+            <div className="flex items-center mb-3 text-stone-500 font-extrabold uppercase tracking-widest text-[10px]">
+                <Code className="w-3.5 h-3.5 mr-2" />
+                Code / Steps
+            </div>
+            <div className="space-y-3">
+                {article.code_snippets.slice(0, 2).map((snippet, idx) => (
+                    <div key={idx} className="relative group/code">
+                        <pre className="bg-stone-900 text-stone-100 p-3 rounded-lg text-xs font-mono overflow-x-auto border border-stone-800">
+                            {snippet}
+                        </pre>
+                        <button 
+                            onClick={() => handleCopyCode(snippet, idx)}
+                            className="absolute top-2 right-2 p-1.5 bg-stone-800 text-stone-400 rounded-md hover:text-white hover:bg-stone-700 opacity-0 group-hover/code:opacity-100 transition-all"
+                            title="Copy Code"
+                        >
+                             {copiedCode === idx ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                    </div>
+                ))}
+            </div>
+          </div>
+      )}
 
       {/* Insights & Tips Grid - Compacted */}
       <div className="grid grid-cols-1 md:grid-cols-2 border-t border-stone-200/60 bg-white/50">
