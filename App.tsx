@@ -1,5 +1,5 @@
-import React, { useState, useEffect, ErrorInfo, ReactNode } from 'react';
-import { DigestConfig, Article, DigestHistoryItem, UserPreferences } from './types.ts';
+import React, { useState, useEffect, ErrorInfo, ReactNode, Component } from 'react';
+import { DigestConfig, Article, DigestHistoryItem } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
 import UrlAnalyzer from './components/UrlAnalyzer.tsx';
@@ -17,12 +17,15 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed: Explicitly extend React.Component to ensure props are typed correctly and avoid import issues
-class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = {
-    hasError: false,
-    error: null
-  };
+// Fixed: Explicitly extend Component with constructor to resolve prop typing issues
+class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null
+    };
+  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -74,7 +77,7 @@ function AppContent() {
   const [likedArticles, setLikedArticles] = useState<Article[]>([]);
   const [dislikedArticles, setDislikedArticles] = useState<Article[]>([]);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
-
+  
   const [config, setConfig] = useState<DigestConfig>({
     level: 'Mid-Level',
     topics: ['Random/Surprise Me'],
@@ -161,7 +164,7 @@ function AppContent() {
       setHistory(prev => [historyItem, ...prev]);
     } catch (err) {
       console.error("Analysis failed:", err);
-      alert("URL Analysis failed.");
+      alert("URL Analysis failed. Please check your API key and URL.");
       setView('dashboard'); // Go back on error
     } finally {
       setLoading(false);
