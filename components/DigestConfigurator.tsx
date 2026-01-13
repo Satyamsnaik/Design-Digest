@@ -12,14 +12,14 @@ interface DigestConfiguratorProps {
 }
 
 const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConfig, onGenerate, isLoading }) => {
-  
+
   const toggleTopic = (topic: Topic) => {
     setConfig(prev => {
       // If selecting Random, clear others. If selecting others, clear Random.
       if (topic === 'Random/Surprise Me') {
         return { ...prev, topics: ['Random/Surprise Me'] };
       }
-      
+
       const newTopics = prev.topics.filter(t => t !== 'Random/Surprise Me');
       if (prev.topics.includes(topic)) {
         return { ...prev, topics: newTopics.filter(t => t !== topic) };
@@ -38,7 +38,7 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
   };
 
   const dateRanges: DateRange[] = ['Last 24 Hours', 'Last Week', 'Last Month', 'Last 6 Months', 'Any Time'];
-  
+
   const levels: { id: ExperienceLevel; title: string; subtitle: string }[] = [
     { id: 'Junior', title: 'Junior', subtitle: 'Foundations & Core Concepts' },
     { id: 'Mid-Level', title: 'Mid-Level', subtitle: 'Execution & Detailed Analysis' },
@@ -48,10 +48,10 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
   return (
     <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm max-w-4xl mx-auto mb-12 relative overflow-hidden group">
       <div className="relative z-10 flex flex-col md:flex-row gap-8 md:gap-12">
-        
+
         {/* Left Column: Level & Time */}
         <div className="flex-shrink-0 md:w-1/3 space-y-8">
-          
+
           {/* Experience Level */}
           <div className="space-y-4">
             {levels.map((lvl) => {
@@ -62,8 +62,8 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
                   onClick={() => handleLevelChange(lvl.id)}
                   className={`
                     w-full relative px-4 py-3 text-left rounded-xl text-sm font-medium transition-all duration-200 ease-out border active:scale-[0.98]
-                    ${isSelected 
-                      ? 'bg-stone-900 border-stone-900 text-white shadow-lg shadow-stone-200 transform scale-[1.02] ring-2 ring-offset-2 ring-stone-900' 
+                    ${isSelected
+                      ? 'bg-stone-900 border-stone-900 text-white shadow-lg shadow-stone-200 transform scale-[1.02] ring-2 ring-offset-2 ring-stone-900'
                       : 'bg-white border-stone-200 text-stone-600 hover:border-stone-300 hover:bg-stone-50 hover:shadow-sm'
                     }
                   `}
@@ -113,9 +113,9 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
 
         {/* Right Column: Topics */}
         <div className="flex-grow space-y-4 border-l border-stone-100 pl-0 md:pl-10">
-           <div className="flex items-center text-xs font-bold uppercase tracking-widest text-stone-400 mb-1 pl-1 md:hidden">
-              Topics
-            </div>
+          <div className="flex items-center text-xs font-bold uppercase tracking-widest text-stone-400 mb-1 pl-1 md:hidden">
+            Topics
+          </div>
           <div className="flex flex-wrap gap-2.5">
             {AVAILABLE_TOPICS.map((topic) => {
               const isSelected = config.topics.includes(topic);
@@ -147,22 +147,22 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
           onClick={onGenerate}
           disabled={isLoading || config.topics.length === 0}
           className={`
-            group relative flex items-center px-8 py-4 rounded-full font-serif font-bold text-lg shadow-xl transition-all duration-300
-            ${isLoading 
-              ? 'bg-stone-100 text-stone-400 cursor-not-allowed translate-y-0 shadow-none' 
-              : 'bg-charcoal text-white hover:bg-black hover:-translate-y-1 hover:shadow-2xl hover:shadow-charcoal/20 active:translate-y-0 active:scale-95'
+            group relative text-black flex items-center px-8 py-4 rounded-full font-serif font-bold text-lg shadow-xl transition-all duration-300
+            ${isLoading
+              ? 'bg-stone-100 text-stone-400 cursor-not-allowed translate-y-0 shadow-none'
+              : 'bg-stone-900 text-white hover:bg-black hover:-translate-y-1 hover:shadow-2xl hover:shadow-stone-900/20 active:translate-y-0 active:scale-95'
             }
           `}
         >
           {isLoading ? (
-            <span className="flex items-center">
-              <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
-              Synthesizing...
-            </span>
+            <>
+              <RefreshCw className="w-5 h-5 mr-3 animate-spin" />
+              Curating Briefing...
+            </>
           ) : (
             <>
-              <span className="relative z-10">Generate Briefing</span>
-              <RefreshCw className="ml-3 w-5 h-5 transition-transform group-hover:rotate-180" />
+              <RefreshCw className="w-5 h-5 mr-3 transition-transform duration-500 group-hover:rotate-180" />
+              Generate Daily Digest
             </>
           )}
         </button>
