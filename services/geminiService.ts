@@ -39,7 +39,9 @@ const articleSchema = {
 };
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
+  // Use API Key exclusively from environment
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
   const { level, topics, dateRange } = config;
   
   const topicsStr = topics.join(", ");
@@ -72,7 +74,6 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
             type: Type.ARRAY,
             items: articleSchema
         },
-        // Optimize for speed by disabling thinking budget for this task
         thinkingConfig: { thinkingBudget: 0 }
       },
     });
@@ -134,7 +135,6 @@ export async function analyzeUrl(url: string): Promise<Article> {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: articleSchema,
-        // Removed thinkingConfig: { thinkingBudget: 0 } to allow better tool usage for specific URL analysis
       },
     });
     
