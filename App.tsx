@@ -1,11 +1,12 @@
-import React, { useState, useEffect, ErrorInfo, ReactNode, Component } from 'react';
+import React, { Component, useState, useEffect, ErrorInfo, ReactNode } from 'react';
 import { DigestConfig, Article, DigestHistoryItem } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
 import UrlAnalyzer from './components/UrlAnalyzer.tsx';
 import SkeletonLoader from './components/SkeletonLoader.tsx';
-import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter } from 'lucide-react';
-import { FALLBACK_ARTICLES } from './constants.ts';
+import ApiKeyInput from './components/ApiKeyInput.tsx';
+import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter, RefreshCw, Key, ShieldCheck, Settings } from 'lucide-react';
+import { FALLBACK_ARTICLES, DESIGN_QUOTES } from './constants.ts';
 
 // --- Error Boundary Component ---
 interface ErrorBoundaryProps {
@@ -17,7 +18,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed: Explicitly extend Component with constructor to resolve prop typing issues
+// Fix: Use React.Component to ensure props type inference works correctly
 class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -77,7 +78,14 @@ function AppContent() {
   const [likedArticles, setLikedArticles] = useState<Article[]>([]);
   const [dislikedArticles, setDislikedArticles] = useState<Article[]>([]);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
-  
+
+  // Quote State
+  const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * DESIGN_QUOTES.length));
+
+  // API Key State
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+
   const [config, setConfig] = useState<DigestConfig>({
     level: 'Mid-Level',
     topics: ['Random/Surprise Me'],
@@ -98,6 +106,12 @@ function AppContent() {
     } catch (e) {
       console.error("Storage error:", e);
     }
+
+    // Check for API key on mount to potentially show status (optional, keeping silent unless user checks)
+    const storedKey = sessionStorage.getItem("GEMINI_API_KEY");
+    if (storedKey) {
+       // Could set a visual indicator, but keeping UI clean as per style
+    }
   }, []);
 
   useEffect(() => {
@@ -107,7 +121,42 @@ function AppContent() {
     localStorage.setItem('ddd_disliked', JSON.stringify(dislikedArticles));
   }, [history, savedArticles, likedArticles, dislikedArticles]);
 
+  const nextQuote = () => {
+    setQuoteIndex(prev => {
+      let next = Math.floor(Math.random() * DESIGN_QUOTES.length);
+      // Try to get a new one, but don't loop forever if there's only 1 quote
+      if (DESIGN_QUOTES.length > 1) {
+        while (next === prev) {
+            next = Math.floor(Math.random() * DESIGN_QUOTES.length);
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleSaveKey = (key: string) => {
+    if (key) {
+        sessionStorage.setItem("GEMINI_API_KEY", key);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    } else {
+        sessionStorage.removeItem("GEMINI_API_KEY");
+    }
+    setShowApiKeyModal(false);
+  };
+
+  const getActiveKey = () => {
+      return sessionStorage.getItem("GEMINI_API_KEY") || process.env.API_KEY;
+  };
+
   const handleGenerateDigest = async () => {
+    // Validate Key
+    if (!getActiveKey()) {
+        alert("Please set your Gemini API Key first.");
+        setShowApiKeyModal(true);
+        return;
+    }
+
     setLoading(true);
     setLoadingMode('feed');
     setView('result');
@@ -134,7 +183,6 @@ function AppContent() {
       setHistory(prev => [historyItem, ...prev]);
     } catch (err) {
       console.error("Fetch failed:", err);
-      // Even if it fails, we might want to show fallback if not already handled
       setIsFallbackMode(true); 
       setArticles(FALLBACK_ARTICLES);
     } finally {
@@ -143,6 +191,13 @@ function AppContent() {
   };
 
   const handleAnalyzeUrl = async (url: string) => {
+    // Validate Key
+    if (!getActiveKey()) {
+        alert("Please set your Gemini API Key first.");
+        setShowApiKeyModal(true);
+        return;
+    }
+
     setLoading(true);
     setLoadingMode('url');
     setView('result');
@@ -165,7 +220,7 @@ function AppContent() {
     } catch (err) {
       console.error("Analysis failed:", err);
       alert("URL Analysis failed. Please check your API key and URL.");
-      setView('dashboard'); // Go back on error
+      setView('dashboard'); 
     } finally {
       setLoading(false);
     }
@@ -200,6 +255,22 @@ function AppContent() {
 
         {/* Right: Navigation Tabs - iOS Glassmorphism Style */}
         <div className="pointer-events-auto shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] bg-white/40 backdrop-blur-2xl p-1.5 rounded-full border border-white/50 flex gap-1 items-center transition-all duration-300 hover:bg-white/50">
+             
+             {/* Key Button */}
+             <button
+                onClick={() => setShowApiKeyModal(true)}
+                className={`p-2.5 rounded-full transition-all duration-300 ${
+                  showApiKeyModal
+                    ? 'bg-charcoal text-white shadow-sm'
+                    : 'text-stone-500 hover:text-charcoal hover:bg-white/40'
+                }`}
+                title="Set API Key"
+             >
+                 <Settings className="w-5 h-5" />
+             </button>
+
+             <div className="w-px h-5 bg-stone-300/50 mx-0.5"></div>
+
              <button
                 onClick={() => setView('dashboard')}
                 className={`p-2.5 rounded-full transition-all duration-300 ${
@@ -244,6 +315,22 @@ function AppContent() {
   return (
     <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 flex flex-col bg-transparent relative">
       
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-charcoal text-white px-6 py-3 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-[110] flex items-center gap-2.5 animate-in slide-in-from-bottom-4 fade-in duration-500 pointer-events-none">
+            <ShieldCheck className="w-4 h-4 text-green-400" />
+            <span className="text-sm font-semibold tracking-wide">API Key Saved</span>
+        </div>
+      )}
+
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <ApiKeyInput 
+            onSave={handleSaveKey} 
+            onClose={() => setShowApiKeyModal(false)} 
+        />
+      )}
+
       {renderNavBar()}
       
       <main className="max-w-6xl mx-auto px-4 flex-grow w-full pt-24 md:pt-32">
@@ -272,7 +359,7 @@ function AppContent() {
                 <div>
                    <h4 className="text-amber-900 font-bold text-sm uppercase tracking-wide mb-1">AI Connection Unavailable</h4>
                    <p className="text-amber-800 text-sm leading-relaxed">
-                     We couldn't connect to the live intelligence feed (Check your API Key or Network). 
+                     We couldn't connect to the live intelligence feed.
                      <br className="hidden md:block"/>
                      Showing <strong>curated sample data</strong> so you can still experience the interface.
                    </p>
@@ -373,6 +460,27 @@ function AppContent() {
              )}
            </div>
         )}
+
+        {/* Minimal Design Quotes Footer */}
+        <footer className="py-12 pb-16 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+          <div className="max-w-2xl mx-auto flex flex-col items-center gap-3 group">
+            <blockquote className="font-display text-lg md:text-xl text-stone-400 italic leading-relaxed transition-colors duration-300 group-hover:text-stone-500">
+              "{DESIGN_QUOTES[quoteIndex].text}"
+            </blockquote>
+            <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+              <cite className="not-italic text-xs font-bold uppercase tracking-widest text-stone-300">
+                — {DESIGN_QUOTES[quoteIndex].author}
+              </cite>
+              <button 
+                onClick={nextQuote}
+                className="p-1.5 rounded-full text-stone-300 hover:text-stone-500 hover:bg-stone-100 transition-all"
+                title="Next Quote"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );

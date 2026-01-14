@@ -173,7 +173,7 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
                 w-full group relative flex items-center justify-center px-8 py-4 rounded-full font-sans font-bold text-lg transition-all duration-500 ease-out border border-transparent
                 ${isLoading 
                     ? 'bg-stone-100 text-stone-400 cursor-not-allowed' 
-                    : 'bg-charcoal text-white hover:shadow-[0_0_25px_rgba(28,28,28,0.4)] active:scale-[0.98]'
+                    : 'bg-stone-900 text-white hover:bg-black hover:shadow-[0_0_25px_rgba(0,0,0,0.15)] active:scale-[0.98]'
                 }
                 `}
             >

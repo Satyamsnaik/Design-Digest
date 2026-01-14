@@ -5,6 +5,14 @@ import { FALLBACK_ARTICLES } from "../constants.ts";
 // Switched to Flash model for faster inference and tool use
 const MODEL_NAME = 'gemini-3-flash-preview';
 
+const getApiKey = (): string => {
+  if (typeof window !== "undefined") {
+    const stored = sessionStorage.getItem("GEMINI_API_KEY");
+    if (stored) return stored;
+  }
+  return process.env.API_KEY || "";
+};
+
 const getPreferenceContext = (prefs?: UserPreferences): string => {
   if (!prefs) return "";
   let context = "";
@@ -39,9 +47,14 @@ const articleSchema = {
 };
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-  // Use API Key exclusively from environment
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    console.warn("No API Key found in environment variables or session storage.");
+    // We return fallback here, but the UI should ideally prevent this call if no key exists.
+    return FALLBACK_ARTICLES;
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const { level, topics, dateRange } = config;
   
   const topicsStr = topics.join(", ");
@@ -89,7 +102,12 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 }
 
 export async function analyzeUrl(url: string): Promise<Article> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) {
+     throw new Error("No API Key found");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const isYoutube = url.toLowerCase().includes('youtube') || url.toLowerCase().includes('youtu.be');
   
