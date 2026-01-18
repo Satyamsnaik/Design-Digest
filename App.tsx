@@ -1,11 +1,11 @@
-import React, { Component, useState, useEffect, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useEffect, ErrorInfo, ReactNode } from 'react';
 import { DigestConfig, Article, DigestHistoryItem } from './types.ts';
 import DigestConfigurator from './components/DigestConfigurator.tsx';
 import ArticleCard from './components/ArticleCard.tsx';
 import UrlAnalyzer from './components/UrlAnalyzer.tsx';
 import SkeletonLoader from './components/SkeletonLoader.tsx';
 import ApiKeyInput from './components/ApiKeyInput.tsx';
-import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter, RefreshCw, Key, ShieldCheck, Settings } from 'lucide-react';
+import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter, RefreshCw, Key, ShieldCheck, Settings, Search, X } from 'lucide-react';
 import { FALLBACK_ARTICLES, DESIGN_QUOTES } from './constants.ts';
 
 // --- Error Boundary Component ---
@@ -18,15 +18,12 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fix: Use React.Component to ensure props type inference works correctly
-class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null
-    };
-  }
+// Fix: Use React.Component directly to avoid type inference issues
+class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+    error: null
+  };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -86,6 +83,9 @@ function AppContent() {
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [config, setConfig] = useState<DigestConfig>({
     level: 'Mid-Level',
     topics: ['Random/Surprise Me'],
@@ -121,6 +121,11 @@ function AppContent() {
     localStorage.setItem('ddd_disliked', JSON.stringify(dislikedArticles));
   }, [history, savedArticles, likedArticles, dislikedArticles]);
 
+  // Reset search when view changes
+  useEffect(() => {
+    setSearchQuery('');
+  }, [view]);
+
   const nextQuote = () => {
     setQuoteIndex(prev => {
       let next = Math.floor(Math.random() * DESIGN_QUOTES.length);
@@ -150,9 +155,8 @@ function AppContent() {
   };
 
   const handleGenerateDigest = async () => {
-    // Validate Key
+    // Validate Key existence
     if (!getActiveKey()) {
-        alert("Please set your Gemini API Key first.");
         setShowApiKeyModal(true);
         return;
     }
@@ -191,9 +195,8 @@ function AppContent() {
   };
 
   const handleAnalyzeUrl = async (url: string) => {
-    // Validate Key
+    // Validate Key existence
     if (!getActiveKey()) {
-        alert("Please set your Gemini API Key first.");
         setShowApiKeyModal(true);
         return;
     }
@@ -238,6 +241,32 @@ function AppContent() {
     setDislikedArticles(prev => prev.filter(a => a.url !== article.url));
     if (rating === 'up') setLikedArticles(prev => [article, ...prev]);
     else if (rating === 'down') setDislikedArticles(prev => [article, ...prev]);
+  };
+
+  const getFilteredSavedArticles = () => {
+    if (!searchQuery) return savedArticles;
+    const lower = searchQuery.toLowerCase();
+    return savedArticles.filter(a => 
+        a.title.toLowerCase().includes(lower) || 
+        a.summary.some(s => s.toLowerCase().includes(lower)) ||
+        a.category.toLowerCase().includes(lower)
+    );
+  };
+
+  const getFilteredHistory = () => {
+    if (!searchQuery) return history;
+    const lower = searchQuery.toLowerCase();
+    return history.filter(item => {
+        // Search in config level/topics
+        if (item.config.level.toLowerCase().includes(lower)) return true;
+        if (item.config.topics.some(t => t.toLowerCase().includes(lower))) return true;
+        
+        // Search in articles
+        return item.articles.some(a => 
+            a.title.toLowerCase().includes(lower) || 
+            a.summary.some(s => s.toLowerCase().includes(lower))
+        );
+    });
   };
 
   const renderNavBar = () => (
@@ -310,6 +339,29 @@ function AppContent() {
         </div>
       </div>
     </nav>
+  );
+
+  const renderSearch = () => (
+    <div className="mb-6 relative max-w-md animate-in fade-in slide-in-from-top-2 duration-300">
+         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+           <Search className="h-4 w-4 text-stone-400" />
+         </div>
+         <input
+           type="text"
+           className="block w-full pl-10 pr-10 py-2.5 border border-stone-200 rounded-xl leading-5 bg-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-100 focus:border-stone-400 sm:text-sm transition-all"
+           placeholder={`Search ${view === 'saved' ? 'saved articles' : 'history'}...`}
+           value={searchQuery}
+           onChange={(e) => setSearchQuery(e.target.value)}
+         />
+         {searchQuery && (
+            <button 
+               onClick={() => setSearchQuery('')}
+               className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-charcoal cursor-pointer"
+            >
+               <X className="h-4 w-4" />
+            </button>
+         )}
+    </div>
   );
 
   return (
@@ -387,20 +439,31 @@ function AppContent() {
         {(view === 'saved' || view === 'history') && (
            <div className="animate-in fade-in duration-300 max-w-4xl mx-auto">
              
+             {/* Search Bar - Removed condition so it is always visible on these pages */}
+             {renderSearch()}
+
              {view === 'saved' && (
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 pb-20">
-                 {savedArticles.length === 0 ? <p className="col-span-full text-center py-20 text-stone-400">No saved articles yet.</p> : 
-                   savedArticles.map(article => (
+                 {getFilteredSavedArticles().length === 0 ? (
+                    <p className="col-span-full text-center py-20 text-stone-400">
+                        {savedArticles.length === 0 ? "No saved articles yet." : "No matching articles found."}
+                    </p>
+                 ) : (
+                   getFilteredSavedArticles().map(article => (
                      <ArticleCard key={article.url} article={article} isSaved={true} onToggleSave={handleToggleSave} onRate={handleRate} />
                    ))
-                 }
+                 )}
                </div>
              )}
 
              {view === 'history' && (
                 <div className="space-y-4 md:space-y-6 pb-20">
-                  {history.length === 0 ? <p className="text-center py-20 text-stone-400">History is empty.</p> : 
-                    history.map(item => (
+                  {getFilteredHistory().length === 0 ? (
+                      <p className="text-center py-20 text-stone-400">
+                          {history.length === 0 ? "History is empty." : "No matching history found."}
+                      </p>
+                  ) : (
+                    getFilteredHistory().map(item => (
                       <div 
                         key={item.id} 
                         onClick={() => {setArticles(item.articles); setView('result');}} 
@@ -455,7 +518,7 @@ function AppContent() {
                         )}
                       </div>
                     ))
-                  }
+                  )}
                 </div>
              )}
            </div>

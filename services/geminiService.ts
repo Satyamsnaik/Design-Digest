@@ -5,6 +5,7 @@ import { FALLBACK_ARTICLES } from "../constants.ts";
 // Switched to Flash model for faster inference and tool use
 const MODEL_NAME = 'gemini-3-flash-preview';
 
+// Helper to retrieve key from Session Storage (User entered) or Env (Build time)
 const getApiKey = (): string => {
   if (typeof window !== "undefined") {
     const stored = sessionStorage.getItem("GEMINI_API_KEY");
@@ -48,6 +49,7 @@ const articleSchema = {
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
   const apiKey = getApiKey();
+  
   if (!apiKey) {
     console.warn("No API Key found in environment variables or session storage.");
     // We return fallback here, but the UI should ideally prevent this call if no key exists.
@@ -103,8 +105,9 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 
 export async function analyzeUrl(url: string): Promise<Article> {
   const apiKey = getApiKey();
+  
   if (!apiKey) {
-     throw new Error("No API Key found");
+     throw new Error("No API Key configured.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
