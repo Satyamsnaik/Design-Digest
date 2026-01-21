@@ -1,12 +1,12 @@
-import React, { useState, useEffect, ErrorInfo, ReactNode } from 'react';
-import { DigestConfig, Article, DigestHistoryItem } from './types.ts';
-import DigestConfigurator from './components/DigestConfigurator.tsx';
-import ArticleCard from './components/ArticleCard.tsx';
-import UrlAnalyzer from './components/UrlAnalyzer.tsx';
-import SkeletonLoader from './components/SkeletonLoader.tsx';
-import ApiKeyInput from './components/ApiKeyInput.tsx';
-import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter, RefreshCw, Key, ShieldCheck, Settings, Search, X } from 'lucide-react';
-import { FALLBACK_ARTICLES, DESIGN_QUOTES } from './constants.ts';
+import React, { Component, useState, useEffect, ErrorInfo, ReactNode } from 'react';
+import { DigestConfig, Article, DigestHistoryItem } from './types';
+import DigestConfigurator from './components/DigestConfigurator';
+import ArticleCard from './components/ArticleCard';
+import UrlAnalyzer from './components/UrlAnalyzer';
+import SkeletonLoader from './components/SkeletonLoader';
+import ApiKeyInput from './components/ApiKeyInput';
+import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter, RefreshCw, Search, X, Settings } from 'lucide-react';
+import { FALLBACK_ARTICLES, DESIGN_QUOTES } from './constants';
 
 // --- Error Boundary Component ---
 interface ErrorBoundaryProps {
@@ -18,8 +18,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fix: Use React.Component directly to avoid type inference issues
-class SimpleErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = {
     hasError: false,
     error: null
@@ -75,13 +74,10 @@ function AppContent() {
   const [likedArticles, setLikedArticles] = useState<Article[]>([]);
   const [dislikedArticles, setDislikedArticles] = useState<Article[]>([]);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
+  const [showKeyModal, setShowKeyModal] = useState(false);
 
   // Quote State
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * DESIGN_QUOTES.length));
-
-  // API Key State
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [showToast, setShowToast] = useState(false);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -105,12 +101,6 @@ function AppContent() {
       if (d) setDislikedArticles(JSON.parse(d));
     } catch (e) {
       console.error("Storage error:", e);
-    }
-
-    // Check for API key on mount to potentially show status (optional, keeping silent unless user checks)
-    const storedKey = sessionStorage.getItem("GEMINI_API_KEY");
-    if (storedKey) {
-       // Could set a visual indicator, but keeping UI clean as per style
     }
   }, []);
 
@@ -139,28 +129,7 @@ function AppContent() {
     });
   };
 
-  const handleSaveKey = (key: string) => {
-    if (key) {
-        sessionStorage.setItem("GEMINI_API_KEY", key);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    } else {
-        sessionStorage.removeItem("GEMINI_API_KEY");
-    }
-    setShowApiKeyModal(false);
-  };
-
-  const getActiveKey = () => {
-      return sessionStorage.getItem("GEMINI_API_KEY") || process.env.API_KEY;
-  };
-
   const handleGenerateDigest = async () => {
-    // Validate Key existence
-    if (!getActiveKey()) {
-        setShowApiKeyModal(true);
-        return;
-    }
-
     setLoading(true);
     setLoadingMode('feed');
     setView('result');
@@ -168,7 +137,7 @@ function AppContent() {
     setIsFallbackMode(false);
 
     try {
-      const { fetchLiveDigest } = await import('./services/geminiService.ts');
+      const { fetchLiveDigest } = await import('./services/geminiService');
       const results = await fetchLiveDigest(config, { likedArticles, dislikedArticles });
       
       if (results === FALLBACK_ARTICLES) {
@@ -184,7 +153,9 @@ function AppContent() {
         articles: results,
         type: 'feed'
       };
-      setHistory(prev => [historyItem, ...prev]);
+      
+      // Limit history to last 50 items to prevent storage overflow
+      setHistory(prev => [historyItem, ...prev].slice(0, 50));
     } catch (err) {
       console.error("Fetch failed:", err);
       setIsFallbackMode(true); 
@@ -195,12 +166,6 @@ function AppContent() {
   };
 
   const handleAnalyzeUrl = async (url: string) => {
-    // Validate Key existence
-    if (!getActiveKey()) {
-        setShowApiKeyModal(true);
-        return;
-    }
-
     setLoading(true);
     setLoadingMode('url');
     setView('result');
@@ -208,7 +173,7 @@ function AppContent() {
     setIsFallbackMode(false);
 
     try {
-      const { analyzeUrl } = await import('./services/geminiService.ts');
+      const { analyzeUrl } = await import('./services/geminiService');
       const result = await analyzeUrl(url);
       setArticles([result]);
 
@@ -219,10 +184,12 @@ function AppContent() {
         articles: [result],
         type: 'url'
       };
-      setHistory(prev => [historyItem, ...prev]);
+      
+      // Limit history to last 50 items
+      setHistory(prev => [historyItem, ...prev].slice(0, 50));
     } catch (err) {
       console.error("Analysis failed:", err);
-      alert("URL Analysis failed. Please check your API key and URL.");
+      alert("URL Analysis failed. Please check the URL or try again later.");
       setView('dashboard'); 
     } finally {
       setLoading(false);
@@ -243,6 +210,12 @@ function AppContent() {
     else if (rating === 'down') setDislikedArticles(prev => [article, ...prev]);
   };
 
+  const handleSaveKey = (key: string) => {
+      sessionStorage.setItem("GEMINI_API_KEY", key);
+      setShowKeyModal(false);
+      alert("API Key saved for this session.");
+  };
+
   const getFilteredSavedArticles = () => {
     if (!searchQuery) return savedArticles;
     const lower = searchQuery.toLowerCase();
@@ -257,9 +230,9 @@ function AppContent() {
     if (!searchQuery) return history;
     const lower = searchQuery.toLowerCase();
     return history.filter(item => {
-        // Search in config level/topics
-        if (item.config.level.toLowerCase().includes(lower)) return true;
-        if (item.config.topics.some(t => t.toLowerCase().includes(lower))) return true;
+        // Search in config level/topics (safe checks for legacy data)
+        if (item.config?.level?.toLowerCase().includes(lower)) return true;
+        if (item.config?.topics?.some(t => t.toLowerCase().includes(lower))) return true;
         
         // Search in articles
         return item.articles.some(a => 
@@ -275,31 +248,16 @@ function AppContent() {
         
         {/* Left: Title for Saved/History */}
         <div className="pointer-events-auto min-w-[40px] min-h-[44px] flex items-center">
-             {(view === 'saved' || view === 'history') && (
+             {(view === 'saved' || view === 'history') ? (
                <h1 className="font-display text-2xl md:text-3xl font-bold text-charcoal tracking-tight capitalize animate-in fade-in slide-in-from-left-4 duration-500">
                  {view === 'saved' ? 'Saved Articles' : 'History'}
                </h1>
-             )}
+             ) : null}
         </div>
 
         {/* Right: Navigation Tabs - iOS Glassmorphism Style */}
         <div className="pointer-events-auto shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] bg-white/40 backdrop-blur-2xl p-1.5 rounded-full border border-white/50 flex gap-1 items-center transition-all duration-300 hover:bg-white/50">
              
-             {/* Key Button */}
-             <button
-                onClick={() => setShowApiKeyModal(true)}
-                className={`p-2.5 rounded-full transition-all duration-300 ${
-                  showApiKeyModal
-                    ? 'bg-charcoal text-white shadow-sm'
-                    : 'text-stone-500 hover:text-charcoal hover:bg-white/40'
-                }`}
-                title="Set API Key"
-             >
-                 <Settings className="w-5 h-5" />
-             </button>
-
-             <div className="w-px h-5 bg-stone-300/50 mx-0.5"></div>
-
              <button
                 onClick={() => setView('dashboard')}
                 className={`p-2.5 rounded-full transition-all duration-300 ${
@@ -336,6 +294,18 @@ function AppContent() {
             >
               <History className="w-5 h-5" />
             </button>
+
+            {/* Separator */}
+            <div className="w-px h-4 bg-stone-300/30 mx-0.5"></div>
+
+            {/* Settings Button */}
+            <button 
+              onClick={() => setShowKeyModal(true)}
+              className="p-2.5 rounded-full transition-all duration-300 text-stone-400 hover:text-charcoal hover:bg-white/40"
+              title="API Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
         </div>
       </div>
     </nav>
@@ -367,23 +337,12 @@ function AppContent() {
   return (
     <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 flex flex-col bg-transparent relative">
       
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-charcoal text-white px-6 py-3 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] z-[110] flex items-center gap-2.5 animate-in slide-in-from-bottom-4 fade-in duration-500 pointer-events-none">
-            <ShieldCheck className="w-4 h-4 text-green-400" />
-            <span className="text-sm font-semibold tracking-wide">API Key Saved</span>
-        </div>
-      )}
+      {renderNavBar()}
 
       {/* API Key Modal */}
-      {showApiKeyModal && (
-        <ApiKeyInput 
-            onSave={handleSaveKey} 
-            onClose={() => setShowApiKeyModal(false)} 
-        />
+      {showKeyModal && (
+        <ApiKeyInput onSave={handleSaveKey} onClose={() => setShowKeyModal(false)} />
       )}
-
-      {renderNavBar()}
       
       <main className="max-w-6xl mx-auto px-4 flex-grow w-full pt-24 md:pt-32">
         {view === 'dashboard' && (
@@ -439,7 +398,7 @@ function AppContent() {
         {(view === 'saved' || view === 'history') && (
            <div className="animate-in fade-in duration-300 max-w-4xl mx-auto">
              
-             {/* Search Bar - Removed condition so it is always visible on these pages */}
+             {/* Search Bar */}
              {renderSearch()}
 
              {view === 'saved' && (
