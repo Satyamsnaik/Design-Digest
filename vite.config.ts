@@ -1,27 +1,18 @@
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
-export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, process.cwd(), '');
+export default defineConfig({
+	plugins: [
+		react(),
+		tailwindcss() as any,
+	],
 
-  return {
-    plugins: [
-      react(),
-      tailwindcss(),
-    ],
-    // This ensures assets are loaded like "./assets/file.js" instead of "/assets/file.js"
-    // Critical for GitHub Pages or local testing
-    base: './',
-    build: {
-      outDir: 'dist',
-      sourcemap: false
-    },
-    define: {
-      // Stringify the API key to inject it as a string literal into the client code
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
-    }
-  };
-});
+	// REQUIRED for GitHub Pages
+	base: './',
+
+	build: {
+		outDir: 'dist',
+		sourcemap: false,
+	},
+})
