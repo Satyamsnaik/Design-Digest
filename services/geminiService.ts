@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Article, DigestConfig, UserPreferences } from "../types.ts";
-import { FALLBACK_ARTICLES } from "../constants.ts";
+import { Article, DigestConfig, UserPreferences } from "../types";
+import { FALLBACK_ARTICLES } from "../constants";
 
 // Switched to Flash model for faster inference and tool use
 const MODEL_NAME = 'gemini-3-flash-preview';
@@ -17,6 +17,11 @@ const getPreferenceContext = (prefs?: UserPreferences): string => {
     context += `USER FEEDBACK - NEGATIVE: User disliked: ${dislikedTitles}. Avoid similar content.\n`;
   }
   return context;
+};
+
+// Helper to get key from storage or env
+const getApiKey = () => {
+  return sessionStorage.getItem("GEMINI_API_KEY") || process.env.API_KEY;
 };
 
 const articleSchema = {
@@ -39,9 +44,13 @@ const articleSchema = {
 };
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-  // Use API Key exclusively from environment
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    console.warn("No API Key found. Returning fallback data.");
+    return FALLBACK_ARTICLES;
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const { level, topics, dateRange } = config;
   
   const topicsStr = topics.join(", ");
@@ -89,7 +98,10 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 }
 
 export async function analyzeUrl(url: string): Promise<Article> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API Key missing");
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const isYoutube = url.toLowerCase().includes('youtube') || url.toLowerCase().includes('youtu.be');
   

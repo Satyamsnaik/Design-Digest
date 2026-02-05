@@ -1,11 +1,12 @@
-import React, { useState, useEffect, ErrorInfo, ReactNode, Component } from 'react';
-import { DigestConfig, Article, DigestHistoryItem } from './types.ts';
-import DigestConfigurator from './components/DigestConfigurator.tsx';
-import ArticleCard from './components/ArticleCard.tsx';
-import UrlAnalyzer from './components/UrlAnalyzer.tsx';
-import SkeletonLoader from './components/SkeletonLoader.tsx';
-import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter } from 'lucide-react';
-import { FALLBACK_ARTICLES } from './constants.ts';
+import React, { Component, useState, useEffect, ErrorInfo, ReactNode } from 'react';
+import { DigestConfig, Article, DigestHistoryItem } from './types';
+import DigestConfigurator from './components/DigestConfigurator';
+import ArticleCard from './components/ArticleCard';
+import UrlAnalyzer from './components/UrlAnalyzer';
+import SkeletonLoader from './components/SkeletonLoader';
+import ApiKeyInput from './components/ApiKeyInput';
+import { History, Bookmark, Home, AlertTriangle, Link, Tag, ChevronRight, Filter, RefreshCw, Search, X, Settings } from 'lucide-react';
+import { FALLBACK_ARTICLES, DESIGN_QUOTES } from './constants';
 
 // --- Error Boundary Component ---
 interface ErrorBoundaryProps {
@@ -17,15 +18,11 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed: Explicitly extend Component with constructor to resolve prop typing issues
 class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null
-    };
-  }
+  state: ErrorBoundaryState = {
+    hasError: false,
+    error: null
+  };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -77,7 +74,14 @@ function AppContent() {
   const [likedArticles, setLikedArticles] = useState<Article[]>([]);
   const [dislikedArticles, setDislikedArticles] = useState<Article[]>([]);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
-  
+  const [showKeyModal, setShowKeyModal] = useState(false);
+
+  // Quote State
+  const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * DESIGN_QUOTES.length));
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+
   const [config, setConfig] = useState<DigestConfig>({
     level: 'Mid-Level',
     topics: ['Random/Surprise Me'],
@@ -107,6 +111,24 @@ function AppContent() {
     localStorage.setItem('ddd_disliked', JSON.stringify(dislikedArticles));
   }, [history, savedArticles, likedArticles, dislikedArticles]);
 
+  // Reset search when view changes
+  useEffect(() => {
+    setSearchQuery('');
+  }, [view]);
+
+  const nextQuote = () => {
+    setQuoteIndex(prev => {
+      let next = Math.floor(Math.random() * DESIGN_QUOTES.length);
+      // Try to get a new one, but don't loop forever if there's only 1 quote
+      if (DESIGN_QUOTES.length > 1) {
+        while (next === prev) {
+            next = Math.floor(Math.random() * DESIGN_QUOTES.length);
+        }
+      }
+      return next;
+    });
+  };
+
   const handleGenerateDigest = async () => {
     setLoading(true);
     setLoadingMode('feed');
@@ -115,7 +137,7 @@ function AppContent() {
     setIsFallbackMode(false);
 
     try {
-      const { fetchLiveDigest } = await import('./services/geminiService.ts');
+      const { fetchLiveDigest } = await import('./services/geminiService');
       const results = await fetchLiveDigest(config, { likedArticles, dislikedArticles });
       
       if (results === FALLBACK_ARTICLES) {
@@ -131,10 +153,11 @@ function AppContent() {
         articles: results,
         type: 'feed'
       };
-      setHistory(prev => [historyItem, ...prev]);
+      
+      // Limit history to last 50 items to prevent storage overflow
+      setHistory(prev => [historyItem, ...prev].slice(0, 50));
     } catch (err) {
       console.error("Fetch failed:", err);
-      // Even if it fails, we might want to show fallback if not already handled
       setIsFallbackMode(true); 
       setArticles(FALLBACK_ARTICLES);
     } finally {
@@ -150,7 +173,7 @@ function AppContent() {
     setIsFallbackMode(false);
 
     try {
-      const { analyzeUrl } = await import('./services/geminiService.ts');
+      const { analyzeUrl } = await import('./services/geminiService');
       const result = await analyzeUrl(url);
       setArticles([result]);
 
@@ -161,11 +184,13 @@ function AppContent() {
         articles: [result],
         type: 'url'
       };
-      setHistory(prev => [historyItem, ...prev]);
+      
+      // Limit history to last 50 items
+      setHistory(prev => [historyItem, ...prev].slice(0, 50));
     } catch (err) {
       console.error("Analysis failed:", err);
-      alert("URL Analysis failed. Please check your API key and URL.");
-      setView('dashboard'); // Go back on error
+      alert("URL Analysis failed. Please check the URL or try again later.");
+      setView('dashboard'); 
     } finally {
       setLoading(false);
     }
@@ -185,21 +210,54 @@ function AppContent() {
     else if (rating === 'down') setDislikedArticles(prev => [article, ...prev]);
   };
 
+  const handleSaveKey = (key: string) => {
+      sessionStorage.setItem("GEMINI_API_KEY", key);
+      setShowKeyModal(false);
+      alert("API Key saved for this session.");
+  };
+
+  const getFilteredSavedArticles = () => {
+    if (!searchQuery) return savedArticles;
+    const lower = searchQuery.toLowerCase();
+    return savedArticles.filter(a => 
+        a.title.toLowerCase().includes(lower) || 
+        a.summary.some(s => s.toLowerCase().includes(lower)) ||
+        a.category.toLowerCase().includes(lower)
+    );
+  };
+
+  const getFilteredHistory = () => {
+    if (!searchQuery) return history;
+    const lower = searchQuery.toLowerCase();
+    return history.filter(item => {
+        // Search in config level/topics (safe checks for legacy data)
+        if (item.config?.level?.toLowerCase().includes(lower)) return true;
+        if (item.config?.topics?.some(t => t.toLowerCase().includes(lower))) return true;
+        
+        // Search in articles
+        return item.articles.some(a => 
+            a.title.toLowerCase().includes(lower) || 
+            a.summary.some(s => s.toLowerCase().includes(lower))
+        );
+    });
+  };
+
   const renderNavBar = () => (
     <nav className="fixed top-0 inset-x-0 z-50 px-4 py-4 md:py-6 pointer-events-none">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         
         {/* Left: Title for Saved/History */}
         <div className="pointer-events-auto min-w-[40px] min-h-[44px] flex items-center">
-             {(view === 'saved' || view === 'history') && (
+             {(view === 'saved' || view === 'history') ? (
                <h1 className="font-display text-2xl md:text-3xl font-bold text-charcoal tracking-tight capitalize animate-in fade-in slide-in-from-left-4 duration-500">
                  {view === 'saved' ? 'Saved Articles' : 'History'}
                </h1>
-             )}
+             ) : null}
         </div>
 
         {/* Right: Navigation Tabs - iOS Glassmorphism Style */}
         <div className="pointer-events-auto shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] bg-white/40 backdrop-blur-2xl p-1.5 rounded-full border border-white/50 flex gap-1 items-center transition-all duration-300 hover:bg-white/50">
+             
              <button
                 onClick={() => setView('dashboard')}
                 className={`p-2.5 rounded-full transition-all duration-300 ${
@@ -236,15 +294,55 @@ function AppContent() {
             >
               <History className="w-5 h-5" />
             </button>
+
+            {/* Separator */}
+            <div className="w-px h-4 bg-stone-300/30 mx-0.5"></div>
+
+            {/* Settings Button */}
+            <button 
+              onClick={() => setShowKeyModal(true)}
+              className="p-2.5 rounded-full transition-all duration-300 text-stone-400 hover:text-charcoal hover:bg-white/40"
+              title="API Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
         </div>
       </div>
     </nav>
+  );
+
+  const renderSearch = () => (
+    <div className="mb-6 relative max-w-md animate-in fade-in slide-in-from-top-2 duration-300">
+         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+           <Search className="h-4 w-4 text-stone-400" />
+         </div>
+         <input
+           type="text"
+           className="block w-full pl-10 pr-10 py-2.5 border border-stone-200 rounded-xl leading-5 bg-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-100 focus:border-stone-400 sm:text-sm transition-all"
+           placeholder={`Search ${view === 'saved' ? 'saved articles' : 'history'}...`}
+           value={searchQuery}
+           onChange={(e) => setSearchQuery(e.target.value)}
+         />
+         {searchQuery && (
+            <button 
+               onClick={() => setSearchQuery('')}
+               className="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-charcoal cursor-pointer"
+            >
+               <X className="h-4 w-4" />
+            </button>
+         )}
+    </div>
   );
 
   return (
     <div className="min-h-screen font-sans text-charcoal selection:bg-stone-200 flex flex-col bg-transparent relative">
       
       {renderNavBar()}
+
+      {/* API Key Modal */}
+      {showKeyModal && (
+        <ApiKeyInput onSave={handleSaveKey} onClose={() => setShowKeyModal(false)} />
+      )}
       
       <main className="max-w-6xl mx-auto px-4 flex-grow w-full pt-24 md:pt-32">
         {view === 'dashboard' && (
@@ -272,7 +370,7 @@ function AppContent() {
                 <div>
                    <h4 className="text-amber-900 font-bold text-sm uppercase tracking-wide mb-1">AI Connection Unavailable</h4>
                    <p className="text-amber-800 text-sm leading-relaxed">
-                     We couldn't connect to the live intelligence feed (Check your API Key or Network). 
+                     We couldn't connect to the live intelligence feed.
                      <br className="hidden md:block"/>
                      Showing <strong>curated sample data</strong> so you can still experience the interface.
                    </p>
@@ -300,20 +398,31 @@ function AppContent() {
         {(view === 'saved' || view === 'history') && (
            <div className="animate-in fade-in duration-300 max-w-4xl mx-auto">
              
+             {/* Search Bar */}
+             {renderSearch()}
+
              {view === 'saved' && (
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 pb-20">
-                 {savedArticles.length === 0 ? <p className="col-span-full text-center py-20 text-stone-400">No saved articles yet.</p> : 
-                   savedArticles.map(article => (
+                 {getFilteredSavedArticles().length === 0 ? (
+                    <p className="col-span-full text-center py-20 text-stone-400">
+                        {savedArticles.length === 0 ? "No saved articles yet." : "No matching articles found."}
+                    </p>
+                 ) : (
+                   getFilteredSavedArticles().map(article => (
                      <ArticleCard key={article.url} article={article} isSaved={true} onToggleSave={handleToggleSave} onRate={handleRate} />
                    ))
-                 }
+                 )}
                </div>
              )}
 
              {view === 'history' && (
                 <div className="space-y-4 md:space-y-6 pb-20">
-                  {history.length === 0 ? <p className="text-center py-20 text-stone-400">History is empty.</p> : 
-                    history.map(item => (
+                  {getFilteredHistory().length === 0 ? (
+                      <p className="text-center py-20 text-stone-400">
+                          {history.length === 0 ? "History is empty." : "No matching history found."}
+                      </p>
+                  ) : (
+                    getFilteredHistory().map(item => (
                       <div 
                         key={item.id} 
                         onClick={() => {setArticles(item.articles); setView('result');}} 
@@ -368,11 +477,32 @@ function AppContent() {
                         )}
                       </div>
                     ))
-                  }
+                  )}
                 </div>
              )}
            </div>
         )}
+
+        {/* Minimal Design Quotes Footer */}
+        <footer className="py-12 pb-16 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+          <div className="max-w-2xl mx-auto flex flex-col items-center gap-3 group">
+            <blockquote className="font-display text-lg md:text-xl text-stone-400 italic leading-relaxed transition-colors duration-300 group-hover:text-stone-500">
+              "{DESIGN_QUOTES[quoteIndex].text}"
+            </blockquote>
+            <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+              <cite className="not-italic text-xs font-bold uppercase tracking-widest text-stone-300">
+                — {DESIGN_QUOTES[quoteIndex].author}
+              </cite>
+              <button 
+                onClick={nextQuote}
+                className="p-1.5 rounded-full text-stone-300 hover:text-stone-500 hover:bg-stone-100 transition-all"
+                title="Next Quote"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
