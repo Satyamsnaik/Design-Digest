@@ -84,12 +84,39 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 							</span>
 						)}
 					</div>
-					<div className="p-1.5 bg-white border border-stone-100 rounded-full shadow-sm flex-shrink-0">
-						{article.type === 'Video' ? (
-							<PlayCircle className="w-4 h-4 text-stone-400 group-hover:text-charcoal transition-colors" />
-						) : (
-							<BookOpen className="w-4 h-4 text-stone-400 group-hover:text-charcoal transition-colors" />
-						)}
+					<div className="flex items-center gap-2">
+						<div className="p-1.5 bg-white border border-stone-100 rounded-full shadow-sm flex-shrink-0">
+							{article.type === 'Video' ? (
+								<PlayCircle className="w-4 h-4 text-stone-400 group-hover:text-charcoal transition-colors" />
+							) : (
+								<BookOpen className="w-4 h-4 text-stone-400 group-hover:text-charcoal transition-colors" />
+							)}
+						</div>
+
+						<button
+							onClick={handleToggleSpeech}
+							className={`relative group/play overflow-hidden transition-all duration-500 active:scale-90 rounded-full border shadow-sm ${isPlaying
+								? 'bg-amber-500 text-white border-amber-400 p-2 pr-4 pl-3'
+								: 'bg-white text-stone-400 border-stone-100 hover:text-charcoal p-1.5'
+								}`}
+							title={isPlaying ? "Stop reading" : "Read summary"}
+						>
+							<div className="flex items-center gap-2">
+								{isPlaying ? (
+									<>
+										<StopCircle className="w-4 h-4" />
+										<div className="flex items-end gap-0.5 h-3 overflow-hidden">
+											<div className="w-0.5 bg-white/60 animate-[bounce_1s_infinite_0ms]" style={{ height: '60%' }} />
+											<div className="w-0.5 bg-white animate-[bounce_1s_infinite_200ms]" style={{ height: '100%' }} />
+											<div className="w-0.5 bg-white/60 animate-[bounce_1s_infinite_400ms]" style={{ height: '40%' }} />
+											<div className="w-0.5 bg-white animate-[bounce_1s_infinite_100ms]" style={{ height: '80%' }} />
+										</div>
+									</>
+								) : (
+									<PlayCircle className="w-4 h-4" />
+								)}
+							</div>
+						</button>
 					</div>
 				</div>
 
@@ -153,70 +180,54 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
 			</div>
 
 			{/* Footer */}
-			{
-				(onToggleSave || onRate) && (
-					<div className="px-4 py-3 md:px-5 md:py-3 border-t border-stone-200/60 bg-white/60 flex justify-between items-center text-stone-400 backdrop-blur-sm">
-						<div className="flex space-x-2 items-center">
-							{onRate && (
-								<>
-									<button
-										onClick={() => onRate(article, rating === 'up' ? null : 'up')}
-										className={`p-1.5 rounded-full transition-all duration-300 active:scale-90 ${rating === 'up' ? 'text-green-600 bg-green-50 scale-110 shadow-sm ring-1 ring-green-100' : 'hover:bg-stone-100 hover:text-stone-600'}`}
-										title="More like this"
-									>
-										<ThumbsUp className={`w-3.5 h-3.5 ${rating === 'up' ? 'fill-current' : ''}`} />
-									</button>
-									<button
-										onClick={() => onRate(article, rating === 'down' ? null : 'down')}
-										className={`p-1.5 rounded-full transition-all duration-300 active:scale-90 ${rating === 'down' ? 'text-red-600 bg-red-50 scale-110 shadow-sm ring-1 ring-red-100' : 'hover:bg-stone-100 hover:text-stone-600'}`}
-										title="Less like this"
-									>
-										<ThumbsDown className={`w-3.5 h-3.5 ${rating === 'down' ? 'fill-current' : ''}`} />
-									</button>
-								</>
-							)}
-
-							<div className="w-px h-4 bg-stone-200 mx-2" />
-
-							<button
-								onClick={handleToggleSpeech}
-								className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest transition-all duration-300 active:scale-95 border shadow-sm ${isPlaying
-										? 'bg-amber-500 text-white border-amber-600 animate-pulse'
-										: 'bg-stone-900 text-white border-stone-800 hover:bg-black'
-									}`}
-								title={isPlaying ? "Stop reading" : "Listen to article"}
-							>
-								{isPlaying ? <StopCircle className="w-3.5 h-3.5" /> : <PlayCircle className="w-3.5 h-3.5" />}
-								<span className="uppercase">{isPlaying ? 'Stop' : 'Listen'}</span>
-							</button>
-						</div>
-
-						<div className="flex items-center space-x-2 md:space-x-3">
-							{article.tweet_draft && (
+			{(onToggleSave || onRate) && (
+				<div className="px-4 py-3 md:px-5 md:py-3 border-t border-stone-200/60 bg-white/60 flex justify-between items-center text-stone-400 backdrop-blur-sm">
+					<div className="flex space-x-2 items-center">
+						{onRate && (
+							<>
 								<button
-									onClick={handleCopyTweet}
-									className={`flex items-center space-x-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest transition-all duration-300 active:scale-95 border ${copied ? 'text-blue-600 bg-blue-50 border-blue-100' : 'text-stone-400 border-transparent hover:text-blue-500 hover:bg-blue-50/50 hover:border-blue-100'}`}
-									title="Copy Tweet to Clipboard"
+									onClick={() => onRate(article, rating === 'up' ? null : 'up')}
+									className={`p-1.5 rounded-full transition-all duration-300 active:scale-90 ${rating === 'up' ? 'text-green-600 bg-green-50 scale-110 shadow-sm ring-1 ring-green-100' : 'hover:bg-stone-100 hover:text-stone-600'}`}
+									title="More like this"
 								>
-									{copied ? <Check className="w-3 h-3" /> : <Twitter className="w-3 h-3" />}
-									<span className="uppercase hidden sm:inline">{copied ? 'Copied' : 'Tweet'}</span>
+									<ThumbsUp className={`w-3.5 h-3.5 ${rating === 'up' ? 'fill-current' : ''}`} />
 								</button>
-							)}
-
-							{onToggleSave && (
 								<button
-									onClick={() => onToggleSave(article)}
-									className={`flex items-center space-x-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest transition-all duration-300 active:scale-95 border ${isSaved ? 'text-charcoal bg-stone-100 border-stone-200 shadow-sm' : 'text-stone-500 border-transparent hover:bg-stone-100 hover:text-stone-900'}`}
-									title={isSaved ? "Remove from saved" : "Save for later"}
+									onClick={() => onRate(article, rating === 'down' ? null : 'down')}
+									className={`p-1.5 rounded-full transition-all duration-300 active:scale-90 ${rating === 'down' ? 'text-red-600 bg-red-50 scale-110 shadow-sm ring-1 ring-red-100' : 'hover:bg-stone-100 hover:text-stone-600'}`}
+									title="Less like this"
 								>
-									<Bookmark className={`w-3 h-3 transition-all ${isSaved ? 'fill-current' : ''}`} />
-									<span className="uppercase hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
+									<ThumbsDown className={`w-3.5 h-3.5 ${rating === 'down' ? 'fill-current' : ''}`} />
 								</button>
-							)}
-						</div>
+							</>
+						)}
 					</div>
-				)
-			}
+
+					<div className="flex items-center space-x-2 md:space-x-3">
+						{article.tweet_draft && (
+							<button
+								onClick={handleCopyTweet}
+								className={`flex items-center space-x-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest transition-all duration-300 active:scale-95 border ${copied ? 'text-blue-600 bg-blue-50 border-blue-100' : 'text-stone-400 border-transparent hover:text-blue-500 hover:bg-blue-50/50 hover:border-blue-100'}`}
+								title="Copy Tweet to Clipboard"
+							>
+								{copied ? <Check className="w-3 h-3" /> : <Twitter className="w-3 h-3" />}
+								<span className="uppercase hidden sm:inline">{copied ? 'Copied' : 'Tweet'}</span>
+							</button>
+						)}
+
+						{onToggleSave && (
+							<button
+								onClick={() => onToggleSave(article)}
+								className={`flex items-center space-x-2 px-3 py-1 rounded-full text-[10px] font-bold tracking-widest transition-all duration-300 active:scale-95 border ${isSaved ? 'text-charcoal bg-stone-100 border-stone-200 shadow-sm' : 'text-stone-500 border-transparent hover:bg-stone-100 hover:text-stone-900'}`}
+								title={isSaved ? "Remove from saved" : "Save for later"}
+							>
+								<Bookmark className={`w-3 h-3 transition-all ${isSaved ? 'fill-current' : ''}`} />
+								<span className="uppercase hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
+							</button>
+						)}
+					</div>
+				</div>
+			)}
 		</article >
 	);
 };

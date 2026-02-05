@@ -11,6 +11,20 @@ interface DigestConfiguratorProps {
 }
 
 const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConfig, onGenerate, isLoading }) => {
+	const [customTopic, setCustomTopic] = React.useState('');
+
+	const handleAddCustomTopic = (e: React.FormEvent) => {
+		e.preventDefault();
+		const topic = customTopic.trim();
+		if (!topic) return;
+
+		setConfig(prev => {
+			const currentTopicsWithoutRandom = prev.topics.filter(t => t !== 'Random/Surprise Me');
+			if (currentTopicsWithoutRandom.includes(topic)) return prev;
+			return { ...prev, topics: [...currentTopicsWithoutRandom, topic] };
+		});
+		setCustomTopic('');
+	};
 
 	const toggleTopic = (topic: Topic) => {
 		setConfig(prev => {
@@ -104,6 +118,16 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
 						<Layers className="w-3 h-3 mr-1.5" />
 						Topics
 					</div>
+
+					<form onSubmit={handleAddCustomTopic} className="mb-4">
+						<input
+							type="text"
+							value={customTopic}
+							onChange={(e) => setCustomTopic(e.target.value)}
+							placeholder="Type custom topic and press Enter..."
+							className="w-full px-4 py-2 text-sm border border-stone-100 rounded-xl bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-100 focus:border-stone-200 transition-all placeholder:text-stone-400 font-sans"
+						/>
+					</form>
 
 					<div className="flex flex-wrap gap-2 justify-center md:justify-start">
 						{displayTopics.map((topic) => {
