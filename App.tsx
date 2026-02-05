@@ -76,6 +76,7 @@ function AppContent() {
 	const [dislikedArticles, setDislikedArticles] = useState<Article[]>([]);
 	const [isFallbackMode, setIsFallbackMode] = useState(false);
 	const [showKeyModal, setShowKeyModal] = useState(false);
+	const [isKeyMissing, setIsKeyMissing] = useState(false);
 
 	// Quote State
 	const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * DESIGN_QUOTES.length));
@@ -102,6 +103,14 @@ function AppContent() {
 			if (d) setDislikedArticles(JSON.parse(d));
 		} catch (e) {
 			console.error("Storage error:", e);
+		}
+	}, []);
+
+	// Check for API key on mount
+	useEffect(() => {
+		const sessionKey = sessionStorage.getItem("GEMINI_API_KEY");
+		if (!sessionKey) {
+			setIsKeyMissing(true);
 		}
 	}, []);
 
@@ -214,8 +223,9 @@ function AppContent() {
 
 	const handleSaveKey = (key: string) => {
 		sessionStorage.setItem("GEMINI_API_KEY", key);
+		setIsKeyMissing(false);
 		setShowKeyModal(false);
-		alert("API Key saved for this session.");
+		toast.success("API Key saved for this session.");
 	};
 
 	const getFilteredSavedArticles = () => {
@@ -298,13 +308,27 @@ function AppContent() {
 					<div className="w-px h-4 bg-stone-300/30 mx-0.5"></div>
 
 					{/* Settings Button */}
-					<button
-						onClick={() => setShowKeyModal(true)}
-						className="p-2.5 rounded-full transition-all duration-300 text-stone-400 hover:text-charcoal hover:bg-white/40"
-						title="API Settings"
-					>
-						<Settings className="w-5 h-5" />
-					</button>
+					<div className="relative group">
+						<button
+							onClick={() => setShowKeyModal(true)}
+							className={`p-2.5 rounded-full transition-all duration-300 ${isKeyMissing
+								? 'text-amber-500 bg-amber-50/50 hover:bg-amber-100 animate-pulse'
+								: 'text-stone-400 hover:text-charcoal hover:bg-white/40'
+								}`}
+							title="API Settings"
+						>
+							<Settings className="w-5 h-5" />
+						</button>
+
+						{isKeyMissing && (
+							<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 pointer-events-none">
+								<div className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow-lg shadow-amber-200/50 animate-bounce">
+									SETUP REQUIRED
+									<div className="absolute top-full left-1/2 -translate-x-1/2 border-[4px] border-transparent border-t-amber-500" />
+								</div>
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 		</nav>
@@ -353,6 +377,16 @@ function AppContent() {
 							<p className="text-stone-500 text-lg md:text-xl font-sans font-light max-w-lg mx-auto leading-relaxed px-4">
 								Curated intelligence for product designers, strategists, and engineers.
 							</p>
+
+							{isKeyMissing && (
+								<button
+									onClick={() => setShowKeyModal(true)}
+									className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium rounded-full hover:bg-amber-100 transition-all animate-in fade-in slide-in-from-top-4 duration-1000"
+								>
+									<span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+									API Key required for live intelligence. Click to setup.
+								</button>
+							)}
 						</section>
 						<DigestConfigurator config={config} setConfig={setConfig} onGenerate={handleGenerateDigest} isLoading={loading} />
 						<UrlAnalyzer onAnalyze={handleAnalyzeUrl} isLoading={loading} />
