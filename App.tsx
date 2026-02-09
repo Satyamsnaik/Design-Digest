@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import ResultsPage from './pages/ResultsPage';
 import SavedPage from './pages/SavedPage';
 import HistoryPage from './pages/HistoryPage';
+import TextReaderPage from './pages/TextReaderPage';
 import { useArticles } from './hooks/useArticles';
 import { useHistory } from './hooks/useHistory';
 import { useApiKey } from './hooks/useApiKey';
@@ -64,7 +65,7 @@ class SimpleErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySta
 // Main App Component
 function AppContent() {
 	// View state
-	const [view, setView] = useState<'dashboard' | 'history' | 'result' | 'saved'>('dashboard');
+	const [view, setView] = useState<'dashboard' | 'history' | 'result' | 'saved' | 'reader'>('dashboard');
 	const [loading, setLoading] = useState(false);
 	const [loadingMode, setLoadingMode] = useState<'feed' | 'url'>('feed');
 	const [isFallbackMode, setIsFallbackMode] = useState(false);
@@ -166,6 +167,7 @@ function AppContent() {
 	const getNavTitle = () => {
 		if (view === 'saved') return 'Saved Articles';
 		if (view === 'history') return 'History';
+		if (view === 'reader') return 'Article Reader';
 		return undefined;
 	};
 
@@ -231,6 +233,10 @@ function AppContent() {
 						onSelectHistory={handleSelectHistory}
 						totalCount={history.length}
 					/>
+				)}
+
+				{view === 'reader' && (
+					<TextReaderPage />
 				)}
 
 				<Footer />

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Home, Bookmark, History, Settings } from 'lucide-react';
+import { Home, Bookmark, History, Settings, Headphones } from 'lucide-react';
 
 interface NavBarProps {
-	currentView: 'dashboard' | 'history' | 'result' | 'saved';
-	onViewChange: (view: 'dashboard' | 'history' | 'result' | 'saved') => void;
+	currentView: 'dashboard' | 'history' | 'result' | 'saved' | 'reader';
+	onViewChange: (view: 'dashboard' | 'history' | 'result' | 'saved' | 'reader') => void;
 	savedCount: number;
 	isKeyMissing: boolean;
 	onOpenApiKey: () => void;
@@ -43,6 +43,16 @@ export default function NavBar({
 						title="Home"
 					>
 						<Home className="w-5 h-5" />
+					</button>
+					<button
+						onClick={() => onViewChange('reader')}
+						className={`p-2.5 rounded-full transition-all duration-300 ${currentView === 'reader'
+							? 'bg-white/80 text-charcoal shadow-sm ring-1 ring-black/5'
+							: 'text-stone-500 hover:text-stone-800 hover:bg-white/40'
+							}`}
+						title="Article Reader"
+					>
+						<Headphones className="w-5 h-5" />
 					</button>
 					<button
 						onClick={() => onViewChange('saved')}
@@ -98,3 +108,4 @@ export default function NavBar({
 		</nav>
 	);
 }
+
