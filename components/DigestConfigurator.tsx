@@ -1,7 +1,7 @@
 import React from 'react';
 import { DigestConfig, ExperienceLevel, Topic, DateRange } from '../types.ts';
 import { AVAILABLE_TOPICS } from '../constants.ts';
-import { RefreshCw, Clock, Signal, Layers } from 'lucide-react';
+import { RefreshCw, Clock, Signal, Layers, Plus, Search } from 'lucide-react';
 
 interface DigestConfiguratorProps {
 	config: DigestConfig;
@@ -76,41 +76,6 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
 
 			<div className="space-y-8">
 
-				{/* Experience Level Section - Tab Style */}
-				<div>
-					<div className="flex items-center text-[10px] font-extrabold uppercase tracking-widest text-stone-400 px-1 mb-3">
-						<Signal className="w-3 h-3 mr-1.5" />
-						Experience Level
-					</div>
-
-					<div className="bg-stone-100/70 p-1.5 rounded-2xl flex relative">
-						{levels.map((lvl) => {
-							const isSelected = config.level === lvl.id;
-							return (
-								<button
-									key={lvl.id}
-									onClick={() => handleLevelChange(lvl.id)}
-									className={`
-                    flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-300 relative z-10
-                    ${isSelected
-											? 'bg-white text-charcoal shadow-sm ring-1 ring-black/5'
-											: 'text-stone-400 hover:text-stone-600'
-										}
-                  `}
-								>
-									{lvl.title}
-								</button>
-							);
-						})}
-					</div>
-
-					{/* Subtle Subtitle Display */}
-					<div className="mt-2 px-1 text-center h-4">
-						<p className="text-[10px] text-stone-400 font-medium animate-in fade-in duration-300">
-							{levels.find(l => l.id === config.level)?.subtitle}
-						</p>
-					</div>
-				</div>
 
 				{/* Topics Section - Lighter Pills */}
 				<div>
@@ -119,15 +84,26 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
 						Topics
 					</div>
 
-					<form onSubmit={handleAddCustomTopic} className="mb-4">
+					<form onSubmit={handleAddCustomTopic} className="mb-6 relative group">
+						<div className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors">
+							<Search className="w-4 h-4" />
+						</div>
 						<input
 							type="text"
 							value={customTopic}
 							onChange={(e) => setCustomTopic(e.target.value)}
-							placeholder="Type custom topic and press Enter..."
-							className="w-full px-4 py-2 text-sm border border-stone-100 rounded-xl bg-stone-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-100 focus:border-stone-200 transition-all placeholder:text-stone-400 font-sans"
+							placeholder="Search a custom interest..."
+							className="w-full pl-11 pr-12 py-3 text-sm bg-stone-50/80 border border-stone-200 rounded-2xl focus:bg-white focus:ring-4 focus:ring-stone-100/50 focus:border-stone-300 outline-none transition-all duration-200 placeholder:text-stone-400 font-medium shadow-sm"
 						/>
+						<div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none">
+							<kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-stone-200 bg-stone-100 px-1.5 font-mono text-[10px] font-medium text-stone-500">
+								Enter
+							</kbd>
+						</div>
 					</form>
+
+
+
 
 					<div className="flex flex-wrap gap-2 justify-center md:justify-start">
 						{displayTopics.map((topic) => {
@@ -150,6 +126,43 @@ const DigestConfigurator: React.FC<DigestConfiguratorProps> = ({ config, setConf
 						})}
 					</div>
 				</div>
+
+				{/* Experience Level Section - Tab Style */}
+				<div>
+					<div className="flex items-center text-[10px] font-extrabold uppercase tracking-widest text-stone-400 px-1 mb-3">
+						<Signal className="w-3 h-3 mr-1.5" />
+						Experience Level
+					</div>
+
+					<div className="bg-stone-100/70 p-1.5 rounded-2xl flex relative">
+						{levels.map((lvl) => {
+							const isSelected = config.level === lvl.id;
+							return (
+								<button
+									key={lvl.id}
+									onClick={() => handleLevelChange(lvl.id)}
+									className={`
+                    flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 relative z-10
+                    ${isSelected
+											? 'bg-white text-charcoal shadow-sm ring-1 ring-black/5'
+											: 'text-stone-400 hover:text-stone-600'
+										}
+                  `}
+								>
+									{lvl.title}
+								</button>
+							);
+						})}
+					</div>
+
+					{/* Subtle Subtitle Display */}
+					<div className="mt-2 px-1 text-center h-4">
+						<p className="text-[10px] text-stone-400 font-medium animate-in fade-in duration-300">
+							{levels.find(l => l.id === config.level)?.subtitle}
+						</p>
+					</div>
+				</div>
+
 
 				{/* Timeframe Section - Lighter Pills */}
 				<div>
