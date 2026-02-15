@@ -91,7 +91,7 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
 			model: MODEL_NAME,
 			contents: prompt,
 			config: {
-				tools: [{ googleSearch: {} }],
+				// tools: [{ googleSearch: {} }],
 				responseMimeType: "application/json",
 				responseSchema: {
 					type: Type.ARRAY,
@@ -164,7 +164,7 @@ export async function analyzeUrl(url: string): Promise<Article> {
 			model: MODEL_NAME,
 			contents: prompt,
 			config: {
-				tools: [{ googleSearch: {} }],
+				// tools: [{ googleSearch: {} }],
 				responseMimeType: "application/json",
 				responseSchema: articleSchema,
 			},
