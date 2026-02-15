@@ -1,4 +1,4 @@
-import{F as it}from"./index-D5ukfvp3.js";var Fo={};/**
+import{F as it}from"./index-Bd8VM5yG.js";var Fo={};/**
  * @license
  * Copyright 2025 Google LLC
  * SPDX-License-Identifier: Apache-2.0
@@ -262,7 +262,7 @@ ${p}`)}return a}),ce=ed(Ao);/**
     OUTPUT FORMAT: Return a valid JSON array of 4 Article objects. 
     IMPORTANT: For EVERY article, you MUST generate EXACTLY 5 distinct 'insights' and EXACTLY 5 distinct 'application_tips'.
     Use Google Search to find ACTUAL, CURRENT URLs.
-  `;try{const p=(await o.models.generateContent({model:Uo,contents:d,config:{tools:[{googleSearch:{}}],responseMimeType:"application/json",responseSchema:{type:D.ARRAY,items:ko},thinkingConfig:{thinkingBudget:0}}})).text;if(!p)return it;const h=p.replace(/```json\n?|\n?```/g,"").trim();return JSON.parse(h)}catch(f){console.error("Gemini fetch failed:",f);const p=(f==null?void 0:f.message)||(f==null?void 0:f.toString())||"";throw p.includes("429")||p.includes("quota")||p.includes("RESOURCE_EXHAUSTED")?new Error("🚨 API Quota Exceeded. Please use a new Key."):new Error("Failed to generate digest. Please try again.")}}async function zd(t){const e=Lo();if(!e)throw new Error("API Key missing");const n=new xo({apiKey:e}),o=t.toLowerCase().includes("youtube")||t.toLowerCase().includes("youtu.be");let s="";o?s=`
+  `;try{const p=(await o.models.generateContent({model:Uo,contents:d,config:{responseMimeType:"application/json",responseSchema:{type:D.ARRAY,items:ko},thinkingConfig:{thinkingBudget:0}}})).text;if(!p)return it;const h=p.replace(/```json\n?|\n?```/g,"").trim();return JSON.parse(h)}catch(f){console.error("Gemini fetch failed:",f);const p=(f==null?void 0:f.message)||(f==null?void 0:f.toString())||"";throw p.includes("429")||p.includes("quota")||p.includes("RESOURCE_EXHAUSTED")?new Error("🚨 API Quota Exceeded. Please use a new Key."):new Error("Failed to generate digest. Please try again.")}}async function zd(t){const e=Lo();if(!e)throw new Error("API Key missing");const n=new xo({apiKey:e}),o=t.toLowerCase().includes("youtube")||t.toLowerCase().includes("youtu.be");let s="";o?s=`
       CONTEXT: This is a YouTube video URL.
       CRITICAL: You MUST use Google Search to find the *actual* video title, description, and transcript/content.
       - Query suggestion: "summary of youtube video ${t}" or search for the video ID.
@@ -287,4 +287,4 @@ ${p}`)}return a}),ce=ed(Ao);/**
     1. Summary: 3 concise paragraphs describing the actual content found.
     2. Insights: Extract EXACTLY 5 distinct core insights.
     3. Application Tips: Generate EXACTLY 5 actionable, practical steps.
-  `;try{const u=(await n.models.generateContent({model:Uo,contents:l,config:{tools:[{googleSearch:{}}],responseMimeType:"application/json",responseSchema:ko}})).text;if(!u)throw new Error("Empty response");const c=u.replace(/```json\n?|\n?```/g,"").trim();return JSON.parse(c)}catch(a){console.error("Analysis failed:",a);const u=(a==null?void 0:a.message)||(a==null?void 0:a.toString())||"";throw u.includes("429")||u.includes("quota")||u.includes("RESOURCE_EXHAUSTED")?new Error("🚨 API Quota Exceeded. Please use a new Key."):a}}export{zd as analyzeUrl,Od as fetchLiveDigest};
+  `;try{const u=(await n.models.generateContent({model:Uo,contents:l,config:{responseMimeType:"application/json",responseSchema:ko}})).text;if(!u)throw new Error("Empty response");const c=u.replace(/```json\n?|\n?```/g,"").trim();return JSON.parse(c)}catch(a){console.error("Analysis failed:",a);const u=(a==null?void 0:a.message)||(a==null?void 0:a.toString())||"";throw u.includes("429")||u.includes("quota")||u.includes("RESOURCE_EXHAUSTED")?new Error("🚨 API Quota Exceeded. Please use a new Key."):a}}export{zd as analyzeUrl,Od as fetchLiveDigest};
