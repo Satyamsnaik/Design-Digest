@@ -9,7 +9,7 @@ export default defineConfig({
 	],
 
 	// REQUIRED for GitHub Pages
-	base: './',
+	base: '/Design-Digest/',
 
 	build: {
 		outDir: 'dist',
