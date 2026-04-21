@@ -1,41 +1,44 @@
 
-export type ExperienceLevel = 'Junior' | 'Mid-Level' | 'Senior';
+export type Category = 'Design' | 'Finance' | 'Product Management' | 'Business Development' | 'Leadership' | 'Productivity' | 'Nutrition & Fitness';
+
+export type ExperienceLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
 export type DateRange = 'Last 24 Hours' | 'Last Week' | 'Last Month' | 'Last 6 Months' | 'Any Time';
 
 export type Topic = string;
 
 export interface Article {
-	id: string;
-	title: string;
-	author: string;
-	source: string;
-	type: 'Article' | 'Video';
-	category: string;
-	url: string;
-	date?: string; // Publication date
-	summary: string[];
-	insights: string[];
-	application_tips: string[];
-	code_snippets?: string[]; // New field for technical content
-	tweet_draft?: string; // Pre-generated tweet content
+  id: string;
+  title: string;
+  author: string;
+  source: string;
+  type: 'Article' | 'Video';
+  category: string;
+  url: string;
+  date?: string; // Publication date
+  summary: string[];
+  insights: string[];
+  application_tips: string[];
+  code_snippets?: string[]; // New field for technical content
+  tweet_draft?: string; // Pre-generated tweet content
 }
 
 export interface DigestConfig {
-	level: ExperienceLevel;
-	topics: Topic[];
-	dateRange: DateRange;
+  category: Category;
+  level: ExperienceLevel;
+  topics: Topic[];
+  dateRange: DateRange;
 }
 
 export interface DigestHistoryItem {
-	id: string;
-	timestamp: number;
-	config: DigestConfig;
-	articles: Article[];
-	type: 'feed' | 'url'; // Whether it was generated from feed or single URL
+  id: string;
+  timestamp: number;
+  config: DigestConfig;
+  articles: Article[];
+  type: 'feed' | 'url'; // Whether it was generated from feed or single URL
 }
 
 export interface UserPreferences {
-	likedArticles: Article[];
-	dislikedArticles: Article[];
+  likedArticles: Article[];
+  dislikedArticles: Article[];
 }

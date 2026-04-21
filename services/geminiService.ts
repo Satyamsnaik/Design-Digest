@@ -6,79 +6,66 @@ import { FALLBACK_ARTICLES } from "../constants";
 const MODEL_NAME = 'gemini-3-flash-preview';
 
 const getPreferenceContext = (prefs?: UserPreferences): string => {
-	if (!prefs) return "";
-	let context = "";
-	if (prefs.likedArticles.length > 0) {
-		const likedTitles = prefs.likedArticles.slice(0, 5).map(a => `"${a.title}"`).join(", ");
-		context += `USER FEEDBACK - POSITIVE: User liked: ${likedTitles}. Prioritize similar quality/depth.\n`;
-	}
-	if (prefs.dislikedArticles.length > 0) {
-		const dislikedTitles = prefs.dislikedArticles.slice(0, 5).map(a => `"${a.title}"`).join(", ");
-		context += `USER FEEDBACK - NEGATIVE: User disliked: ${dislikedTitles}. Avoid similar content.\n`;
-	}
-	return context;
+  if (!prefs) return "";
+  let context = "";
+  if (prefs.likedArticles.length > 0) {
+    const likedTitles = prefs.likedArticles.slice(0, 5).map(a => `"${a.title}"`).join(", ");
+    context += `USER FEEDBACK - POSITIVE: User liked: ${likedTitles}. Prioritize similar quality/depth.\n`;
+  }
+  if (prefs.dislikedArticles.length > 0) {
+    const dislikedTitles = prefs.dislikedArticles.slice(0, 5).map(a => `"${a.title}"`).join(", ");
+    context += `USER FEEDBACK - NEGATIVE: User disliked: ${dislikedTitles}. Avoid similar content.\n`;
+  }
+  return context;
 };
 
 // Helper to get key from storage or env
 const getApiKey = () => {
-	const sessionKey = sessionStorage.getItem("GEMINI_API_KEY");
-	const envKey = import.meta.env.VITE_API_KEY;
-
-	if (sessionKey) {
-		console.log("🔑 Using API Key from: Session Storage");
-		return sessionKey;
-	}
-
-	if (envKey) {
-		console.log("🔑 Using API Key from: .env file");
-		return envKey;
-	}
-
-	console.warn("⚠️ No API Key found in Session Storage or .env");
-	return undefined;
+  return sessionStorage.getItem("GEMINI_API_KEY") || process.env.API_KEY;
 };
 
 const articleSchema = {
-	type: Type.OBJECT,
-	properties: {
-		id: { type: Type.STRING },
-		title: { type: Type.STRING },
-		author: { type: Type.STRING },
-		source: { type: Type.STRING },
-		type: { type: Type.STRING },
-		category: { type: Type.STRING },
-		url: { type: Type.STRING },
-		date: { type: Type.STRING },
-		summary: { type: Type.ARRAY, items: { type: Type.STRING } },
-		insights: { type: Type.ARRAY, items: { type: Type.STRING } },
-		application_tips: { type: Type.ARRAY, items: { type: Type.STRING } },
-		tweet_draft: { type: Type.STRING }
-	},
-	required: ["id", "title", "author", "source", "type", "category", "url", "summary", "insights", "application_tips"],
+    type: Type.OBJECT,
+    properties: {
+        id: { type: Type.STRING },
+        title: { type: Type.STRING },
+        author: { type: Type.STRING },
+        source: { type: Type.STRING },
+        type: { type: Type.STRING },
+        category: { type: Type.STRING },
+        url: { type: Type.STRING },
+        date: { type: Type.STRING },
+        summary: { type: Type.ARRAY, items: { type: Type.STRING } },
+        insights: { type: Type.ARRAY, items: { type: Type.STRING } },
+        application_tips: { type: Type.ARRAY, items: { type: Type.STRING } },
+        tweet_draft: { type: Type.STRING }
+    },
+    required: ["id", "title", "author", "source", "type", "category", "url", "summary", "insights", "application_tips"],
 };
 
 export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferences): Promise<Article[]> {
-	const apiKey = getApiKey();
-	if (!apiKey) {
-		console.warn("No API Key found. Returning fallback data.");
-		return FALLBACK_ARTICLES;
-	}
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    console.warn("No API Key found. Returning fallback data.");
+    return FALLBACK_ARTICLES;
+  }
 
-	const ai = new GoogleGenAI({ apiKey });
-	const { level, topics, dateRange } = config;
+  const ai = new GoogleGenAI({ apiKey });
+  const { category, level, topics, dateRange } = config;
+  
+  const topicsStr = topics.join(", ");
+  const preferenceContext = getPreferenceContext(prefs);
 
-	const topicsStr = topics.join(", ");
-	const preferenceContext = getPreferenceContext(prefs);
-
-	const prompt = `
-    ACT AS: A World-Class Senior Product Design Lead and Curator.
-    TASK: Find 4 unique, high-quality design articles or videos.
+  const prompt = `
+    ACT AS: A World-Class Senior Curator and Expert in ${category}.
+    TASK: Find 4 unique, high-quality articles or videos.
     
     STRICT CONSTRAINTS:
     1. DATE: Published within ${dateRange}.
-    2. LEVEL: ${level} (If Senior: avoid generic 101 content, look for deep dives, case studies, and strategy).
-    3. TOPICS: ${topicsStr}.
-    4. QUALITY: Sources must be reputable (e.g., NNGroup, A List Apart, Smashing Mag, Case Studies, Substack leaders).
+    2. LEVEL: ${level} (If Advanced: avoid generic 101 content, look for deep dives, case studies, and advanced strategy).
+    3. CATEGORY: ${category}.
+    4. TOPICS: ${topicsStr}.
+    5. QUALITY: Sources must be highly reputable industry leaders and publications.
     ${preferenceContext}
     
     OUTPUT FORMAT: Return a valid JSON array of 4 Article objects. 
@@ -86,48 +73,42 @@ export async function fetchLiveDigest(config: DigestConfig, prefs?: UserPreferen
     Use Google Search to find ACTUAL, CURRENT URLs.
   `;
 
-	try {
-		const response = await ai.models.generateContent({
-			model: MODEL_NAME,
-			contents: prompt,
-			config: {
-				// tools: [{ googleSearch: {} }],
-				responseMimeType: "application/json",
-				responseSchema: {
-					type: Type.ARRAY,
-					items: articleSchema
-				},
-				thinkingConfig: { thinkingBudget: 0 }
-			},
-		});
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: Type.ARRAY,
+            items: articleSchema
+        },
+        thinkingConfig: { thinkingBudget: 0 }
+      },
+    });
 
-		const text = response.text;
-		if (!text) return FALLBACK_ARTICLES;
-		const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
-		return JSON.parse(cleanText) as Article[];
-	} catch (error: any) {
-		console.error("Gemini fetch failed:", error);
-
-		const msg = error?.message || error?.toString() || "";
-		if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
-			throw new Error("🚨 API Quota Exceeded. Please use a new Key.");
-		}
-
-		throw new Error("Failed to generate digest. Please try again.");
-	}
+    const text = response.text;
+    if (!text) return FALLBACK_ARTICLES;
+    const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleanText) as Article[];
+  } catch (error) {
+    console.error("Gemini fetch failed:", error);
+    return FALLBACK_ARTICLES;
+  }
 }
 
 export async function analyzeUrl(url: string): Promise<Article> {
-	const apiKey = getApiKey();
-	if (!apiKey) throw new Error("API Key missing");
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API Key missing");
 
-	const ai = new GoogleGenAI({ apiKey });
-
-	const isYoutube = url.toLowerCase().includes('youtube') || url.toLowerCase().includes('youtu.be');
-
-	let contextInstruction = "";
-	if (isYoutube) {
-		contextInstruction = `
+  const ai = new GoogleGenAI({ apiKey });
+  
+  const isYoutube = url.toLowerCase().includes('youtube') || url.toLowerCase().includes('youtu.be');
+  
+  let contextInstruction = "";
+  if (isYoutube) {
+    contextInstruction = `
       CONTEXT: This is a YouTube video URL.
       CRITICAL: You MUST use Google Search to find the *actual* video title, description, and transcript/content.
       - Query suggestion: "summary of youtube video ${url}" or search for the video ID.
@@ -135,17 +116,17 @@ export async function analyzeUrl(url: string): Promise<Article> {
       - 'application_tips' should be step-by-step instructions derived from the video content.
       - Ensure the 'type' field is set to 'Video'.
     `;
-	} else {
-		contextInstruction = `
+  } else {
+    contextInstruction = `
       CONTEXT: This is a web article.
       CRITICAL: You MUST use Google Search to find the *actual* article content.
       - Verify the content matches the URL.
       - Extract the core content.
       - Ensure the 'type' field is set to 'Article'.
     `;
-	}
+  }
 
-	const prompt = `
+  const prompt = `
     Analyze this specific URL: ${url}
     
     Act as a Product Designer & Technical Lead. 
@@ -159,29 +140,23 @@ export async function analyzeUrl(url: string): Promise<Article> {
     3. Application Tips: Generate EXACTLY 5 actionable, practical steps.
   `;
 
-	try {
-		const response = await ai.models.generateContent({
-			model: MODEL_NAME,
-			contents: prompt,
-			config: {
-				// tools: [{ googleSearch: {} }],
-				responseMimeType: "application/json",
-				responseSchema: articleSchema,
-			},
-		});
-
-		const text = response.text;
-		if (!text) throw new Error("Empty response");
-		const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
-		return JSON.parse(cleanText) as Article;
-	} catch (error: any) {
-		console.error("Analysis failed:", error);
-
-		const msg = error?.message || error?.toString() || "";
-		if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
-			throw new Error("🚨 API Quota Exceeded. Please use a new Key.");
-		}
-
-		throw error;
-	}
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt,
+      config: { 
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: articleSchema,
+      },
+    });
+    
+    const text = response.text;
+    if (!text) throw new Error("Empty response");
+    const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+    return JSON.parse(cleanText) as Article;
+  } catch (error) {
+    console.error("Analysis failed:", error);
+    throw error;
+  }
 }

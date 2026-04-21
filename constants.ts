@@ -1,17 +1,57 @@
 
-import { Article, Topic } from './types.ts';
+import { Article, Category } from './types.ts';
 
-export const AVAILABLE_TOPICS: Topic[] = [
-  'Product Thinking',
-  'AI in UX',
-  'Visual Design',
-  'Strategy',
-  'Design Systems',
-  'Research',
-  'Product Design Case Studies',
-  'UX Design Case Studies',
-  'Random/Surprise Me'
-];
+export const CATEGORIES_AND_TOPICS: Record<Category, string[]> = {
+  'Design': [
+    'UX Fundamentals',
+    'UI Principles',
+    'Design Systems',
+    'Interaction Design',
+    'Accessibility'
+  ],
+  'Finance': [
+    'Personal Finance Basics',
+    'Investing (Stocks, Mutual Funds)',
+    'Budgeting',
+    'Taxes',
+    'Risk Management'
+  ],
+  'Product Management': [
+    'Product Thinking',
+    'Roadmapping',
+    'User Research',
+    'Metrics & Analytics',
+    'Stakeholder Management'
+  ],
+  'Business Development': [
+    'Sales Fundamentals',
+    'Negotiation',
+    'Market Research',
+    'Partnerships',
+    'Growth Strategy'
+  ],
+  'Leadership': [
+    'Decision Making',
+    'Team Management',
+    'Communication',
+    'Conflict Resolution',
+    'Strategic Thinking'
+  ],
+  'Productivity': [
+    'Time Management',
+    'Focus Techniques',
+    'Habit Building',
+    'Goal Setting',
+    'Task Prioritization'
+  ],
+  'Nutrition & Fitness': [
+    'Diet Basics',
+    'Muscle Building',
+    'Fat Loss',
+    'Workout Plans',
+    'Recovery & Sleep'
+  ]
+};
 
 export const DESIGN_QUOTES = [
   { text: "Design is not just what it looks like and feels like. Design is how it works.", author: "Steve Jobs" },
